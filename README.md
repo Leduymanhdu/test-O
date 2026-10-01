@@ -63,6 +63,38 @@ docker-compose ps
 >
 > **pgAdmin:** http://localhost:5050 — Email: `admin@labodc.com` / Password: `admin123`
 
+### Execute / Khởi tạo lại Database
+
+**Cách 1 — Dùng `psql` trong container (khuyên dùng):**
+
+```bash
+# Mở psql bên trong container PostgreSQL
+docker exec -it labodc-postgres psql -U root -d labodc
+
+# Chạy file SQL từ bên trong psql
+\i /docker-entrypoint-initdb.d/schema.sql
+
+# Thoát psql
+\q
+```
+
+**Cách 2 — Chạy lệnh một dòng không cần vào psql:**
+
+```bash
+docker exec -i labodc-postgres psql -U root -d labodc < src/database/schema.sql
+```
+
+**Cách 3 — Dùng pgAdmin (giao diện web):**
+
+1. Mở http://localhost:5050
+2. Đăng nhập: `admin@labodc.com` / `admin123`
+3. Kết nối server: **Add New Server** → tab *Connection* → Host: `postgres`, Port: `5432`, Username: `root`, Password: `123123`
+4. Chọn database `labodc` → menu **Tools → Query Tool**
+5. Mở file SQL bằng nút **Open File** (biểu tượng thư mục) → chọn `schema.sql`
+6. Nhấn **F5** hoặc nút **Execute** để chạy
+
+> **Lưu ý:** Các file SQL chỉ tự động chạy lần đầu khi container được tạo mới. Nếu container đã tồn tại (chỉ bị stop), cần dùng một trong ba cách trên để chạy lại.
+
 Dừng database:
 
 ```bash
@@ -72,8 +104,8 @@ docker-compose down
 Reset toàn bộ data về trạng thái ban đầu:
 
 ```bash
-docker-compose down -v
-docker-compose up -d
+docker-compose down -v   # xóa volume (toàn bộ data)
+docker-compose up -d     # tạo lại container, SQL tự chạy lại từ đầu
 ```
 
 ---
