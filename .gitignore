@@ -1,0 +1,80 @@
+# OS Files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.project
+.classpath
+.settings/
+*.sublime-*
+
+# Backend (Spring Boot)
+labodc-backend/target/
+labodc-backend/.mvn/
+labodc-backend/mvnw
+labodc-backend/mvnw.cmd
+labodc-backend/.gradle/
+labodc-backend/build/
+labodc-backend/out/
+labodc-backend/*.log
+labodc-backend/*.gz
+
+# Frontend (React)
+labodc-web-portal/node_modules/
+labodc-web-portal/build/
+labodc-web-portal/dist/
+labodc-web-portal/.next/
+labodc-web-portal/.cache/
+labodc-web-portal/coverage/
+labodc-web-portal/*.log
+
+# Mobile (Flutter)
+labodc-mobile/.dart_tool/
+labodc-mobile/.flutter-plugins
+labodc-mobile/.flutter-plugins-dependencies
+labodc-mobile/.packages
+labodc-mobile/.pub-cache/
+labodc-mobile/.pub/
+labodc-mobile/build/
+labodc-mobile/ios/Pods/
+labodc-mobile/ios/.symlinks/
+labodc-mobile/android/.gradle/
+labodc-mobile/android/.idea/
+labodc-mobile/android/local.properties
+labodc-mobile/android/captures/
+labodc-mobile/*.iml
+
+# Environment Variables
+
+
+# Database
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary Files
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# CI/CD
+.gitlab-ci-local/
+
+labodc-backend/rewrite.yml
+

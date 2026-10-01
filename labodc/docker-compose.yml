@@ -1,0 +1,74 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: labodc-phase1-postgres
+    environment:
+      POSTGRES_USER: labodc
+      POSTGRES_PASSWORD: labodc
+      POSTGRES_DB: labodc
+    ports:
+      - "5432:5432"
+    volumes:
+      - labodc_phase1_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U labodc -d labodc"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  auth-service:
+    build: ./auth-service
+    container_name: labodc-phase1-auth
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/labodc
+      SPRING_DATASOURCE_USERNAME: labodc
+      SPRING_DATASOURCE_PASSWORD: labodc
+      SECURITY_JWT_SECRET: CHANGE_ME_TO_A_LONG_RANDOM_SECRET_32CHARS_MIN
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  user-service:
+    build: ./user-service
+    container_name: labodc-phase1-user
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/labodc
+      SPRING_DATASOURCE_USERNAME: labodc
+      SPRING_DATASOURCE_PASSWORD: labodc
+      SECURITY_JWT_SECRET: CHANGE_ME_TO_A_LONG_RANDOM_SECRET_32CHARS_MIN
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  project-service:
+    build: ./project-service
+    container_name: labodc-phase2-project
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/labodc
+      SPRING_DATASOURCE_USERNAME: labodc
+      SPRING_DATASOURCE_PASSWORD: labodc
+      SECURITY_JWT_SECRET: CHANGE_ME_TO_A_LONG_RANDOM_SECRET_32CHARS_MIN
+    ports:
+      - "8083:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: labodc-phase1-gateway
+    environment:
+      SECURITY_JWT_SECRET: CHANGE_ME_TO_A_LONG_RANDOM_SECRET_32CHARS_MIN
+    ports:
+      - "8085:8080"
+    depends_on:
+      - auth-service
+      - user-service
+      - project-service
+
+volumes:
+  labodc_phase1_postgres:

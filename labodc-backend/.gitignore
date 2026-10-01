@@ -1,0 +1,33 @@
+# Maven target directory
+target/
+
+# IntelliJ IDEA files
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse files
+.classpath
+.project
+.settings/
+
+# VS Code files
+.vscode/
+
+# Log files
+*.log
+
+# Package files
+*.jar
+*.war
+*.ear
+
+# Application properties with sensitive data (if needed)
+# application.properties
+
+# MacOS
+.DS_Store
+
+# Windows
+Thumbs.db

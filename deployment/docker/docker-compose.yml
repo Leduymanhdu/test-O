@@ -1,0 +1,132 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: labodc-postgres
+    environment:
+      POSTGRES_DB: labodc
+      POSTGRES_USER: labodc_user
+      POSTGRES_PASSWORD: labodc_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../../labodc-backend/src/database/Initial_Schema.sql:/docker-entrypoint-initdb.d/01_Initial_Schema.sql:ro
+      - ../../labodc-backend/src/database/Centralized_File_Management.sql:/docker-entrypoint-initdb.d/02_Centralized_File_Management.sql:ro
+      - ../../labodc-backend/src/database/Tasks_Payment_Reports.sql:/docker-entrypoint-initdb.d/03_Tasks_Payment_Reports.sql:ro
+      - ../../labodc-backend/src/database/Notifications_System_Config.sql:/docker-entrypoint-initdb.d/04_Notifications_System_Config.sql:ro
+      - ../../labodc-backend/src/database/Seed_Test_Data.sql:/docker-entrypoint-initdb.d/99_Seed_Test_Data.sql:ro
+    networks:
+      - labodc-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U labodc_user -d labodc"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: labodc-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - labodc-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Elasticsearch
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.0
+    container_name: labodc-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - labodc-network
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Dịch vụ Backend
+  backend:
+    build:
+      context: ../../labodc-backend
+      dockerfile: Dockerfile
+    container_name: labodc-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/labodc
+      SPRING_DATASOURCE_USERNAME: labodc_user
+      SPRING_DATASOURCE_PASSWORD: labodc_password
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      ELASTICSEARCH_HOST: elasticsearch
+      ELASTICSEARCH_PORT: 9200
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - labodc-network
+    restart: unless-stopped
+
+  # Cổng thông tin Web Frontend
+  frontend:
+    build:
+      context: ../../labodc-web-portal
+      dockerfile: Dockerfile
+    container_name: labodc-frontend
+    environment:
+      REACT_APP_API_BASE_URL: http://backend:8080/api
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - labodc-network
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: labodc-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../nginx/sites:/etc/nginx/sites-available:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - labodc-network
+    restart: unless-stopped
+
+networks:
+  labodc-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  es_data:

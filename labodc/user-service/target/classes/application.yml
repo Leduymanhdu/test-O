@@ -1,0 +1,23 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: user-service
+  datasource:
+    url: jdbc:postgresql://postgres:5432/labodc
+    username: labodc
+    password: labodc
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+security:
+  jwt:
+    # Must match api-gateway + auth-service
+    secret: "CHANGE_ME_TO_A_LONG_RANDOM_SECRET_32CHARS_MIN"
+    clockSkewSeconds: 30
+
+logging:
+  level:
+    org.hibernate.SQL: warn

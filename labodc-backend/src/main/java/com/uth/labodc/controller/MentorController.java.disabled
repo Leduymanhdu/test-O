@@ -1,0 +1,255 @@
+package com.uth.labodc.controller;
+
+import com.uth.labodc.dto.ApiResponse;
+import com.uth.labodc.dto.mentor.*;
+import com.uth.labodc.model.entity.TalentEvaluation;
+import com.uth.labodc.service.MentorService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/mentor")
+@RequiredArgsConstructor
+@Slf4j
+@CrossOrigin(origins = "*")
+@PreAuthorize("hasRole('MENTOR')")
+public class MentorController {
+
+    private final MentorService mentorService;
+
+    @GetMapping("/dashboard")
+    public ResponseEntity<ApiResponse<MentorDashboardDTO>> getDashboard() {
+        String email = currentEmail();
+        log.info("GET /api/mentor/dashboard - mentor={}", email);
+        try {
+            return ResponseEntity.ok(ApiResponse.success(mentorService.getDashboardOverview(email)));
+        } catch (Exception e) {
+            log.error("Error fetching mentor dashboard", e);
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Failed to fetch mentor dashboard: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/projects")
+    public ResponseEntity<ApiResponse<List<MentorProjectDTO>>> getProjects() {
+        String email = currentEmail();
+        log.info("GET /api/mentor/projects - mentor={}", email);
+        try {
+            return ResponseEntity.ok(ApiResponse.success(mentorService.getProjects(email)));
+        } catch (Exception e) {
+            log.error("Error fetching mentor projects", e);
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Failed to fetch mentor projects: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/invitations")
+    public ResponseEntity<ApiResponse<List<MentorInvitationDTO>>> getInvitations() {
+        String email = currentEmail();
+        log.info("GET /api/mentor/invitations - mentor={}", email);
+        try {
+            return ResponseEntity.ok(ApiResponse.success(mentorService.getInvitations(email)));
+        } catch (Exception e) {
+            log.error("Error fetching mentor invitations", e);
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Failed to fetch mentor invitations: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/invitations/{id}/accept")
+    public ResponseEntity<ApiResponse<Void>> acceptInvitation(@PathVariable("id") long id) {
+        String email = currentEmail();
+        log.info("POST /api/mentor/invitations/{}/accept - mentor={}", id, email);
+        try {
+            mentorService.acceptInvitation(email, id);
+            return ResponseEntity.ok(ApiResponse.success("Invitation accepted", null));
+        } catch (Exception e) {
+            log.error("Error accepting mentor invitation", e);
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Failed to accept invitation: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/invitations/{id}/reject")
+    public ResponseEntity<ApiResponse<Void>> rejectInvitation(@PathVariable("id") long id) {
+        String email = currentEmail();
+        log.info("POST /api/mentor/invitations/{}/reject - mentor={}", id, email);
+        try {
+            mentorService.rejectInvitation(email, id);
+            return ResponseEntity.ok(ApiResponse.success("Invitation rejected", null));
+        } catch (Exception e) {
+            log.error("Error rejecting mentor invitation", e);
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Failed to reject invitation: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/tasks")
+    public ResponseEntity<ApiResponse<List<MentorTaskDTO>>> getTasks() {
+        String email = currentEmail();
+        log.info("GET /api/mentor/tasks - mentor={}", email);
+        try {
+            return ResponseEntity.ok(ApiResponse.success(mentorService.getTasks(email)));
+        } catch (Exception e) {
+            log.error("Error fetching mentor tasks", e);
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Failed to fetch mentor tasks: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/evaluations")
+    public ResponseEntity<ApiResponse<List<MentorEvaluationProfileDTO>>> getEvaluations() {
+        String email = currentEmail();
+        log.info("GET /api/mentor/evaluations - mentor={}", email);
+        try {
+            return ResponseEntity.ok(ApiResponse.success(mentorService.getEvaluations(email)));
+        } catch (Exception e) {
+            log.error("Error fetching mentor evaluations", e);
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Failed to fetch mentor evaluations: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/reports")
+    public ResponseEntity<ApiResponse<List<MentorReportDTO>>> getReports() {
+        String email = currentEmail();
+        log.info("GET /api/mentor/reports - mentor={}", email);
+        try {
+            return ResponseEntity.ok(ApiResponse.success(mentorService.getReports(email)));
+        } catch (Exception e) {
+            log.error("Error fetching mentor reports", e);
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Failed to fetch mentor reports: " + e.getMessage()));
+        }
+    }
+
+    // ==================== TASK MANAGEMENT ====================
+
+    @GetMapping("/projects/{projectId}/tasks")
+    public ResponseEntity<ApiResponse<List<ProjectTaskDTO>>> getProjectTasks(@PathVariable Long projectId) {
+        String email = currentEmail();
+        log.info("GET /api/mentor/projects/{}/tasks - mentor={}", projectId, email);
+        try {
+            return ResponseEntity.ok(ApiResponse.success(mentorService.getProjectTasks(email, projectId)));
+        } catch (Exception e) {
+            log.error("Error fetching project tasks", e);
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Failed to fetch tasks: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/projects/{projectId}/tasks")
+    public ResponseEntity<ApiResponse<ProjectTaskDTO>> createTask(
+            @PathVariable Long projectId,
+            @RequestBody CreateTaskRequest request) {
+        String email = currentEmail();
+        log.info("POST /api/mentor/projects/{}/tasks - mentor={}", projectId, email);
+        try {
+            request.setProjectId(projectId);
+            ProjectTaskDTO task = mentorService.createTask(email, request);
+            return ResponseEntity.ok(ApiResponse.success("Task created successfully", task));
+        } catch (Exception e) {
+            log.error("Error creating task", e);
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Failed to create task: " + e.getMessage()));
+        }
+    }
+
+    @PutMapping("/projects/{projectId}/tasks/{taskId}")
+    public ResponseEntity<ApiResponse<ProjectTaskDTO>> updateTask(
+            @PathVariable Long projectId,
+            @PathVariable Long taskId,
+            @RequestBody CreateTaskRequest request) {
+        String email = currentEmail();
+        log.info("PUT /api/mentor/projects/{}/tasks/{} - mentor={}", projectId, taskId, email);
+        try {
+            ProjectTaskDTO task = mentorService.updateTask(email, taskId, request);
+            return ResponseEntity.ok(ApiResponse.success("Task updated successfully", task));
+        } catch (Exception e) {
+            log.error("Error updating task", e);
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Failed to update task: " + e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/projects/{projectId}/tasks/{taskId}")
+    public ResponseEntity<ApiResponse<Void>> deleteTask(
+            @PathVariable Long projectId,
+            @PathVariable Long taskId) {
+        String email = currentEmail();
+        log.info("DELETE /api/mentor/projects/{}/tasks/{} - mentor={}", projectId, taskId, email);
+        try {
+            mentorService.deleteTask(email, taskId);
+            return ResponseEntity.ok(ApiResponse.success("Task deleted successfully", null));
+        } catch (Exception e) {
+            log.error("Error deleting task", e);
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Failed to delete task: " + e.getMessage()));
+        }
+    }
+
+    // ==================== EVALUATIONS ====================
+
+    @PostMapping("/projects/{projectId}/evaluations")
+    public ResponseEntity<ApiResponse<TalentEvaluation>> submitEvaluation(
+            @PathVariable Long projectId,
+            @RequestBody SubmitEvaluationRequest request) {
+        String email = currentEmail();
+        log.info("POST /api/mentor/projects/{}/evaluations - mentor={}", projectId, email);
+        try {
+            TalentEvaluation evaluation = mentorService.submitEvaluation(email, projectId, request);
+            return ResponseEntity.ok(ApiResponse.success("Evaluation submitted successfully", evaluation));
+        } catch (Exception e) {
+            log.error("Error submitting evaluation", e);
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Failed to submit evaluation: " + e.getMessage()));
+        }
+    }
+
+    // ==================== FUND DISTRIBUTION APPROVAL ====================
+
+    @PostMapping("/fund-distributions/{distributionId}/approve")
+    public ResponseEntity<ApiResponse<Void>> approveFundDistribution(
+            @PathVariable Long distributionId,
+            @RequestBody FundDistributionApprovalRequest request) {
+        String email = currentEmail();
+        log.info("POST /api/mentor/fund-distributions/{}/approve - mentor={}, action={}", 
+                distributionId, email, request.getAction());
+        try {
+            mentorService.approveFundDistribution(email, distributionId, request);
+            String message = "APPROVE".equalsIgnoreCase(request.getAction()) 
+                ? "Fund distribution approved" 
+                : "Fund distribution rejected";
+            return ResponseEntity.ok(ApiResponse.success(message, null));
+        } catch (Exception e) {
+            log.error("Error approving fund distribution", e);
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Failed to process approval: " + e.getMessage()));
+        }
+    }
+    
+    // ==================== REPORTS ====================
+    
+    @PostMapping("/reports")
+    public ResponseEntity<ApiResponse<String>> submitReport(
+            @RequestParam Long projectId,
+            @RequestParam String student,
+            @RequestParam String studentId,
+            @RequestParam String reportName,
+            @RequestParam String submittedDate,
+            @RequestParam String dueDate,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String summary,
+            @RequestParam(required = false) org.springframework.web.multipart.MultipartFile file) {
+        String email = currentEmail();
+        log.info("POST /api/mentor/reports - mentor={}, projectId={}, student={}, hasFile={}", 
+                 email, projectId, student, file != null);
+        try {
+            mentorService.submitReport(email, projectId, student, studentId, reportName, 
+                                      submittedDate, dueDate, status, summary, file);
+            return ResponseEntity.ok(ApiResponse.success("Report submitted successfully", "Report has been saved"));
+        } catch (Exception e) {
+            log.error("Error submitting report", e);
+            return ResponseEntity.internalServerError().body(
+                ApiResponse.error("Failed to submit report: " + e.getMessage()));
+        }
+    }
+
+    private static String currentEmail() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null ? authentication.getName() : "";
+    }
+}

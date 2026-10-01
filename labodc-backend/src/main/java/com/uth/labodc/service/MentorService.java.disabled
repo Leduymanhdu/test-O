@@ -1,0 +1,643 @@
+package com.uth.labodc.service;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.uth.labodc.dto.mentor.*;
+import com.uth.labodc.model.entity.Mentor;
+import com.uth.labodc.model.entity.MentorInvitation;
+import com.uth.labodc.model.entity.MentorReport;
+import com.uth.labodc.model.entity.MentorTask;
+import com.uth.labodc.model.entity.Project;
+import com.uth.labodc.model.entity.User;
+import com.uth.labodc.model.enums.ProjectStatus;
+import com.uth.labodc.repository.MentorInvitationRepository;
+import com.uth.labodc.repository.MentorRepository;
+import com.uth.labodc.repository.MentorReportRepository;
+import com.uth.labodc.repository.MentorTaskRepository;
+import com.uth.labodc.repository.ProjectRepository;
+import com.uth.labodc.repository.UserRepository;
+import com.uth.labodc.repository.ProjectTaskRepository;
+import com.uth.labodc.repository.TalentEvaluationRepository;
+import com.uth.labodc.repository.TeamFundDistributionRepository;
+import com.uth.labodc.model.entity.ProjectTask;
+import com.uth.labodc.model.entity.TalentEvaluation;
+import com.uth.labodc.model.entity.TeamFundDistribution;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class MentorService {
+
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
+
+    private final UserRepository userRepository;
+    private final MentorRepository mentorRepository;
+    private final ProjectRepository projectRepository;
+
+    private final MentorInvitationRepository mentorInvitationRepository;
+    private final MentorTaskRepository mentorTaskRepository;
+    private final MentorReportRepository mentorReportRepository;
+    private final ProjectTaskRepository projectTaskRepository;
+    private final TalentEvaluationRepository talentEvaluationRepository;
+    private final TeamFundDistributionRepository teamFundDistributionRepository;
+    private final ObjectMapper objectMapper;
+
+    @Transactional(readOnly = true)
+    public MentorDashboardDTO getDashboardOverview(String email) {
+        Mentor mentor = resolveMentor(email);
+        List<Project> assigned = projectRepository.findByMentorId(mentor.getId());
+        int pendingInvitations = safePendingInvitationCount(mentor.getId());
+
+        long inProgress = assigned.stream().filter(p -> p.getStatus() == ProjectStatus.IN_PROGRESS).count();
+        long completed = assigned.stream().filter(p -> p.getStatus() == ProjectStatus.COMPLETED).count();
+        double avgProgress = assigned.isEmpty()
+                ? 0
+                : assigned.stream().mapToInt(p -> safeInt(p.getProgressPercentage())).average().orElse(0);
+
+        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+        long newAssigned = 0;
+        try {
+            newAssigned = projectRepository.countNewMentorProjects(mentor.getId(), thirtyDaysAgo);
+        } catch (Exception e) {
+            log.warn("Could not count new mentor projects: {}", e.getMessage());
+        }
+
+        List<MentorStatCardDTO> stats = List.of(
+                MentorStatCardDTO.builder()
+                        .id("assigned")
+                        .title("Dự án đang hướng dẫn")
+                        .value(assigned.size())
+                        .color("#3b82f6")
+                        .trend(MentorTrendDTO.builder().value(newAssigned).positive(newAssigned >= 0).build())
+                        .build(),
+                MentorStatCardDTO.builder()
+                        .id("inProgress")
+                        .title("Đang triển khai")
+                        .value(inProgress)
+                        .color("#f59e0b")
+                        .build(),
+                MentorStatCardDTO.builder()
+                        .id("completed")
+                        .title("Hoàn thành")
+                        .value(completed)
+                        .color("#10b981")
+                        .build(),
+                MentorStatCardDTO.builder()
+                        .id("avgProgress")
+                        .title("Tiến độ TB")
+                        .value(String.format("%.0f%%", avgProgress))
+                        .color("#8b5cf6")
+                        .build()
+        );
+
+        List<MentorQuickActionDTO> quickActions = List.of(
+                MentorQuickActionDTO.builder()
+                        .id("tasks")
+                        .title("Quản lý nhiệm vụ")
+                        .description("Theo dõi tiến độ và deadline")
+                        .variant("primary")
+                        .build(),
+                MentorQuickActionDTO.builder()
+                        .id("reports")
+                        .title("Xem báo cáo")
+                        .description("Duyệt báo cáo nhóm dự án")
+                        .variant("success")
+                        .build(),
+                MentorQuickActionDTO.builder()
+                        .id("invitations")
+                        .title("Lời mời")
+                    .description(String.format("%d lời mời khả dụng", pendingInvitations))
+                        .variant("ghost")
+                        .build()
+        );
+
+        List<MentorActivityDTO> activities = new ArrayList<>();
+        assigned.stream()
+                .sorted((a, b) -> safeDateTime(b.getUpdatedAt()).compareTo(safeDateTime(a.getUpdatedAt())))
+                .limit(6)
+                .forEach(project -> {
+                    String type = "info";
+                    if (project.getStatus() == ProjectStatus.COMPLETED) type = "success";
+                    if (project.getStatus() == ProjectStatus.RECRUITING || project.getStatus() == ProjectStatus.ON_HOLD) type = "warning";
+
+                    activities.add(MentorActivityDTO.builder()
+                            .id(String.valueOf(project.getId()))
+                            .action("Cập nhật dự án: " + project.getTitle())
+                            .timeAgo(toTimeAgo(safeDateTime(project.getUpdatedAt())))
+                            .type(type)
+                            .build());
+                });
+
+        return MentorDashboardDTO.builder()
+                .stats(stats)
+                .quickActions(quickActions)
+                .recentActivities(activities)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<MentorProjectDTO> getProjects(String email) {
+        Mentor mentor = resolveMentor(email);
+        return projectRepository.findByMentorId(mentor.getId()).stream().map(this::toProjectDTO).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<MentorInvitationDTO> getInvitations(String email) {
+        Mentor mentor = resolveMentor(email);
+        return safeInvitations(mentor.getId()).stream().map(this::toInvitationDTO).toList();
+    }
+
+    @Transactional
+    public void acceptInvitation(String email, long invitationId) {
+        Mentor mentor = resolveMentor(email);
+        MentorInvitation invitation = mentorInvitationRepository.findById(invitationId)
+                .orElseThrow(() -> new RuntimeException("Invitation not found"));
+
+        if (!mentor.getId().equals(invitation.getMentorId())) {
+            throw new RuntimeException("Forbidden");
+        }
+
+        Long invitationProjectId = invitation.getProjectId();
+        if (invitationProjectId == null) {
+            throw new RuntimeException("Invitation has no project");
+        }
+
+        Project project = projectRepository.findById(invitationProjectId)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+
+        if (project.getMentorId() != null && !project.getMentorId().equals(mentor.getId())) {
+            throw new RuntimeException("Project already assigned to another mentor");
+        }
+
+        project.setMentorId(mentor.getId());
+        projectRepository.save(project);
+
+        setInvitationStatus(invitation, "ACCEPTED");
+    }
+
+    @Transactional
+    public void rejectInvitation(String email, long invitationId) {
+        Mentor mentor = resolveMentor(email);
+        MentorInvitation invitation = mentorInvitationRepository.findById(invitationId)
+                .orElseThrow(() -> new RuntimeException("Invitation not found"));
+
+        if (!mentor.getId().equals(invitation.getMentorId())) {
+            throw new RuntimeException("Forbidden");
+        }
+
+        setInvitationStatus(invitation, "REJECTED");
+    }
+
+    private void setInvitationStatus(MentorInvitation invitation, String status) {
+        // Postgres enums typically use uppercase values (PENDING/ACCEPTED/REJECTED).
+        String normalized = status != null ? status.toUpperCase() : null;
+        invitation.setStatus(normalized);
+        mentorInvitationRepository.save(invitation);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MentorTaskDTO> getTasks(String email) {
+        Mentor mentor = resolveMentor(email);
+        return mentorTaskRepository.findByMentorIdOrderByDueDateAsc(mentor.getId())
+            .stream()
+            .map(this::toTaskDTO)
+            .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<MentorEvaluationProfileDTO> getEvaluations(String email) {
+        Mentor mentor = resolveMentor(email);
+        List<Project> assigned = projectRepository.findByMentorId(mentor.getId());
+
+        return assigned.stream().map(project -> {
+            int progress = safeInt(project.getProgressPercentage());
+            int technical = clamp(progress + 20, 0, 100);
+            int attendance = clamp(70 + (progress / 4), 0, 100);
+            int teamwork = clamp(65 + (progress / 3), 0, 100);
+
+            String status;
+            String statusText;
+            if (progress >= 80) {
+                status = "excellent";
+                statusText = "Xuất sắc";
+            } else if (progress >= 50) {
+                status = "good";
+                statusText = "Tốt";
+            } else {
+                status = "average";
+                statusText = "Cần cải thiện";
+            }
+
+            return MentorEvaluationProfileDTO.builder()
+                    .id(String.valueOf(project.getId()))
+                    .name("Nhóm dự án #" + project.getId())
+                    .status(status)
+                    .statusText(statusText)
+                    .technicalSkills(technical)
+                    .progress(progress)
+                    .attendance(attendance)
+                    .teamwork(teamwork)
+                    .avatar("https://api.dicebear.com/7.x/identicon/svg?seed=project-" + project.getId())
+                    .notes("Đánh giá tự động từ tiến độ dự án. Có thể cập nhật khi có bảng đánh giá chính thức.")
+                    .build();
+        }).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<MentorReportDTO> getReports(String email) {
+        Mentor mentor = resolveMentor(email);
+        return mentorReportRepository.findByMentorIdOrderByDueDateDesc(mentor.getId())
+                .stream()
+                .map(this::toReportDTO)
+                .toList();
+    }
+
+    private Mentor resolveMentor(String email) {
+        User user = userRepository.findByEmailAndDeletedAtIsNull(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy user với email: " + email));
+        
+        Mentor mentor = mentorRepository.findByUserId(user.getId())
+                .orElse(null);
+        
+        if (mentor == null) {
+            log.error("User {} (ID: {}) exists but has no mentor profile", email, user.getId());
+            throw new RuntimeException("Tài khoản " + email + " chưa có thông tin mentor. Vui lòng liên hệ admin.");
+        }
+        
+        return mentor;
+    }
+    
+    private LocalDate parseDate(String dateStr) {
+        if (dateStr == null || dateStr.trim().isEmpty()) {
+            return null;
+        }
+        
+        // Handle ISO 8601 datetime format (e.g., "2026-02-03T09:03:42.957Z")
+        if (dateStr.contains("T")) {
+            return LocalDate.parse(dateStr.substring(0, 10));
+        }
+        
+        // Handle simple date format (e.g., "2026-02-03")
+        return LocalDate.parse(dateStr);
+    }
+
+    private MentorProjectDTO toProjectDTO(Project project) {
+        return MentorProjectDTO.builder()
+                .id(String.valueOf(project.getId()))
+                .title(project.getTitle())
+                .status(project.getStatus() != null ? project.getStatus().name() : "")
+                .progress(safeInt(project.getProgressPercentage()))
+                .startDate(project.getStartDate() != null ? project.getStartDate().format(DATE_FORMAT) : null)
+                .endDate(project.getEndDate() != null ? project.getEndDate().format(DATE_FORMAT) : null)
+                .studentCount(project.getCurrentMembersCount() != null ? project.getCurrentMembersCount() : project.getNumberOfStudents())
+                .build();
+    }
+
+    private int safePendingInvitationCount(Long mentorId) {
+        try {
+            return mentorInvitationRepository.findPendingByMentorIdOrderByReceivedDateDesc(mentorId).size();
+        } catch (DataAccessException e) {
+            log.warn("Could not count mentor invitations: {}", e.getMessage());
+            return 0;
+        }
+    }
+
+    private List<MentorInvitation> safeInvitations(Long mentorId) {
+        try {
+            return mentorInvitationRepository.findPendingByMentorIdOrderByReceivedDateDesc(mentorId);
+        } catch (DataAccessException e) {
+            log.warn("Could not load mentor invitations: {}", e.getMessage());
+            return List.of();
+        }
+    }
+
+    private MentorInvitationDTO toInvitationDTO(MentorInvitation invitation) {
+        return MentorInvitationDTO.builder()
+                .id(String.valueOf(invitation.getId()))
+                .projectName(resolveProjectTitle(invitation.getProjectId()))
+                .groupName(invitation.getGroupName())
+                .studentCount(invitation.getStudentCount() != null ? invitation.getStudentCount() : 0)
+                .description(invitation.getDescription() != null ? invitation.getDescription() : "")
+                .deadline(invitation.getDeadline() != null ? invitation.getDeadline().format(DATE_FORMAT) : null)
+                .skills(parseStringArray(invitation.getSkills()))
+                .receivedDate(invitation.getReceivedDate() != null ? invitation.getReceivedDate().format(DATE_FORMAT) : null)
+                .priority(invitation.getPriority() != null ? invitation.getPriority() : "medium")
+                .build();
+    }
+
+    private MentorTaskDTO toTaskDTO(MentorTask task) {
+        return MentorTaskDTO.builder()
+                .id(String.valueOf(task.getId()))
+                .title(task.getTitle())
+                .description(task.getDescription() != null ? task.getDescription() : "")
+                .status(task.getStatus())
+                .progress(safeInt(task.getProgress()))
+                .assignedTo(parseStringArray(task.getAssignedTo()))
+                .dueDate(task.getDueDate() != null ? task.getDueDate().format(DATE_FORMAT) : null)
+                .priority(task.getPriority() != null ? task.getPriority() : "medium")
+                .projectName(task.getProjectName() != null ? task.getProjectName() : resolveProjectTitle(task.getProjectId()))
+                .build();
+    }
+
+    private MentorReportDTO toReportDTO(MentorReport report) {
+        return MentorReportDTO.builder()
+                .id(String.valueOf(report.getId()))
+                .student(report.getStudent())
+                .studentId(report.getStudentId())
+                .reportName(report.getReportName())
+                .status(report.getStatus())
+                .submittedDate(report.getSubmittedDate() != null ? report.getSubmittedDate().format(DATE_FORMAT) : null)
+                .dueDate(report.getDueDate() != null ? report.getDueDate().format(DATE_FORMAT) : null)
+                .score(report.getScore())
+                .fileSize(report.getFileSize())
+                .build();
+    }
+
+    private String resolveProjectTitle(Long projectId) {
+        if (projectId == null) return "";
+        try {
+            return projectRepository.findById(projectId).map(Project::getTitle).orElse("");
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private List<String> parseStringArray(String json) {
+        if (json == null || json.isBlank()) return List.of();
+        try {
+            return objectMapper.readValue(json, new TypeReference<List<String>>() {});
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
+
+    private static int safeInt(Integer value) {
+        return value == null ? 0 : value;
+    }
+
+    private static LocalDateTime safeDateTime(LocalDateTime value) {
+        return value == null ? LocalDateTime.now() : value;
+    }
+
+    private static String toTimeAgo(LocalDateTime time) {
+        Duration duration = Duration.between(time, LocalDateTime.now());
+        long minutes = Math.max(0, duration.toMinutes());
+        if (minutes < 60) return minutes + " phút trước";
+        long hours = duration.toHours();
+        if (hours < 24) return hours + " giờ trước";
+        long days = duration.toDays();
+        return days + " ngày trước";
+    }
+
+    private static int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    // ==================== TASK MANAGEMENT ====================
+    
+    @Transactional(readOnly = true)
+    public List<ProjectTaskDTO> getProjectTasks(String email, Long projectId) {
+        Mentor mentor = resolveMentor(email);
+        validateMentorProject(mentor.getId(), projectId);
+        
+        return projectTaskRepository.findByProjectIdOrderByDueDateAsc(projectId)
+            .stream()
+            .map(this::toProjectTaskDTO)
+            .toList();
+    }
+
+    @Transactional
+    public ProjectTaskDTO createTask(String email, CreateTaskRequest request) {
+        Mentor mentor = resolveMentor(email);
+        validateMentorProject(mentor.getId(), request.getProjectId());
+        
+        ProjectTask task = new ProjectTask();
+        task.setProjectId(request.getProjectId());
+        task.setTaskId(request.getTaskId());
+        task.setTaskName(request.getTaskName());
+        task.setDescription(request.getDescription());
+        task.setAssignedTo(request.getAssignedTo());
+        task.setPriority(request.getPriority() != null ? request.getPriority() : "MEDIUM");
+        task.setStartDate(request.getStartDate() != null ? LocalDate.parse(request.getStartDate()) : null);
+        task.setDueDate(request.getDueDate() != null ? LocalDate.parse(request.getDueDate()) : null);
+        task.setEstimatedHours(request.getEstimatedHours());
+        task.setStatus("TODO");
+        task.setDependencies(request.getDependencies());
+        task.setTags(request.getTags());
+        task.setCreatedBy(mentor.getId());
+        task.setCreatedAt(LocalDateTime.now());
+        task.setUpdatedAt(LocalDateTime.now());
+        
+        ProjectTask saved = projectTaskRepository.save(task);
+        return toProjectTaskDTO(saved);
+    }
+
+    @Transactional
+    public ProjectTaskDTO updateTask(String email, Long taskId, CreateTaskRequest request) {
+        Mentor mentor = resolveMentor(email);
+        ProjectTask task = projectTaskRepository.findById(taskId)
+            .orElseThrow(() -> new RuntimeException("Task not found"));
+        
+        validateMentorProject(mentor.getId(), task.getProjectId());
+        
+        if (request.getTaskName() != null) task.setTaskName(request.getTaskName());
+        if (request.getDescription() != null) task.setDescription(request.getDescription());
+        if (request.getAssignedTo() != null) task.setAssignedTo(request.getAssignedTo());
+        if (request.getPriority() != null) task.setPriority(request.getPriority());
+        if (request.getStartDate() != null) task.setStartDate(LocalDate.parse(request.getStartDate()));
+        if (request.getDueDate() != null) task.setDueDate(LocalDate.parse(request.getDueDate()));
+        if (request.getEstimatedHours() != null) task.setEstimatedHours(request.getEstimatedHours());
+        if (request.getDependencies() != null) task.setDependencies(request.getDependencies());
+        if (request.getTags() != null) task.setTags(request.getTags());
+        
+        task.setUpdatedAt(LocalDateTime.now());
+        
+        ProjectTask saved = projectTaskRepository.save(task);
+        return toProjectTaskDTO(saved);
+    }
+
+    @Transactional
+    public void deleteTask(String email, Long taskId) {
+        Mentor mentor = resolveMentor(email);
+        ProjectTask task = projectTaskRepository.findById(taskId)
+            .orElseThrow(() -> new RuntimeException("Task not found"));
+        
+        validateMentorProject(mentor.getId(), task.getProjectId());
+        projectTaskRepository.delete(task);
+    }
+
+    // ==================== EVALUATIONS ====================
+    
+    @Transactional
+    public TalentEvaluation submitEvaluation(String email, Long projectId, SubmitEvaluationRequest request) {
+        Mentor mentor = resolveMentor(email);
+        validateMentorProject(mentor.getId(), projectId);
+        
+        // Check if evaluation already exists
+        talentEvaluationRepository.findByProjectIdAndTalentIdAndEvaluationPeriod(
+            projectId, request.getTalentId(), request.getEvaluationPeriod()
+        ).ifPresent(e -> {
+            throw new RuntimeException("Evaluation already exists for this period");
+        });
+        
+        TalentEvaluation evaluation = new TalentEvaluation();
+        evaluation.setProjectId(projectId);
+        evaluation.setTalentId(request.getTalentId());
+        evaluation.setMentorId(mentor.getId());
+        evaluation.setEvaluationPeriod(request.getEvaluationPeriod());
+        evaluation.setOverallScore(request.getOverallScore());
+        
+        try {
+            evaluation.setTechnicalSkills(objectMapper.writeValueAsString(request.getTechnicalSkills()));
+            evaluation.setProblemSolving(objectMapper.writeValueAsString(request.getProblemSolving()));
+            evaluation.setTeamwork(objectMapper.writeValueAsString(request.getTeamwork()));
+            evaluation.setCommunication(objectMapper.writeValueAsString(request.getCommunication()));
+            evaluation.setCodeQuality(objectMapper.writeValueAsString(request.getCodeQuality()));
+            evaluation.setPunctuality(objectMapper.writeValueAsString(request.getPunctuality()));
+            evaluation.setStrengths(objectMapper.writeValueAsString(request.getStrengths()));
+            evaluation.setWeaknesses(objectMapper.writeValueAsString(request.getWeaknesses()));
+            evaluation.setRecommendations(objectMapper.writeValueAsString(request.getRecommendations()));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to serialize evaluation data", e);
+        }
+        
+        evaluation.setTasksCompleted(request.getTasksCompleted());
+        evaluation.setTasksTotal(request.getTasksTotal());
+        evaluation.setHoursWorked(request.getHoursWorked());
+        evaluation.setGrade(calculateGrade(request.getOverallScore()));
+        evaluation.setCreatedAt(LocalDateTime.now());
+        evaluation.setUpdatedAt(LocalDateTime.now());
+        
+        return talentEvaluationRepository.save(evaluation);
+    }
+
+    // ==================== FUND DISTRIBUTION APPROVAL ====================
+    
+    @Transactional
+    public void approveFundDistribution(String email, Long distributionId, FundDistributionApprovalRequest request) {
+        Mentor mentor = resolveMentor(email);
+        TeamFundDistribution distribution = teamFundDistributionRepository.findById(distributionId)
+            .orElseThrow(() -> new RuntimeException("Fund distribution not found"));
+        
+        validateMentorProject(mentor.getId(), distribution.getProjectId());
+        
+        if (!"PENDING_MENTOR_APPROVAL".equals(distribution.getStatus())) {
+            throw new RuntimeException("Distribution is not pending approval");
+        }
+        
+        if ("APPROVE".equalsIgnoreCase(request.getAction())) {
+            distribution.setStatus("APPROVED");
+            distribution.setMentorApprovedAt(LocalDateTime.now());
+            distribution.setMentorApprovedBy(mentor.getId());
+        } else if ("REJECT".equalsIgnoreCase(request.getAction())) {
+            distribution.setStatus("REJECTED");
+            distribution.setMentorRejectionReason(request.getReason());
+        } else {
+            throw new RuntimeException("Invalid action: " + request.getAction());
+        }
+        
+        teamFundDistributionRepository.save(distribution);
+    }
+
+    // ==================== HELPER METHODS ====================
+    
+    private void validateMentorProject(Long mentorId, Long projectId) {
+        Project project = projectRepository.findById(projectId)
+            .orElseThrow(() -> new RuntimeException("Project not found"));
+        
+        if (!mentorId.equals(project.getMentorId())) {
+            throw new RuntimeException("You are not the mentor of this project");
+        }
+    }
+
+    private ProjectTaskDTO toProjectTaskDTO(ProjectTask task) {
+        return ProjectTaskDTO.builder()
+            .id(task.getId())
+            .projectId(task.getProjectId())
+            .taskId(task.getTaskId())
+            .taskName(task.getTaskName())
+            .description(task.getDescription())
+            .assignedTo(task.getAssignedTo())
+            .assignedToName(null) // TODO: resolve from talent
+            .priority(task.getPriority())
+            .startDate(task.getStartDate())
+            .dueDate(task.getDueDate())
+            .estimatedHours(task.getEstimatedHours())
+            .actualHours(task.getActualHours())
+            .status(task.getStatus())
+            .dependencies(task.getDependencies())
+            .tags(task.getTags())
+            .build();
+    }
+
+    private String calculateGrade(Double score) {
+        if (score == null) return null;
+        if (score >= 9.0) return "A";
+        if (score >= 8.0) return "B";
+        if (score >= 7.0) return "C";
+        if (score >= 6.0) return "D";
+        return "F";
+    }
+
+    @Transactional
+    public void submitReport(String email, Long projectId, String student, String studentId,
+                            String reportName, String submittedDate, String dueDate,
+                            String status, String summary, 
+                            org.springframework.web.multipart.MultipartFile file) {
+        Mentor mentor = resolveMentor(email);
+        
+        MentorReport report = new MentorReport();
+        report.setMentorId(mentor.getId());
+        report.setProjectId(projectId);
+        report.setStudent(student);
+        report.setStudentId(studentId);
+        report.setReportName(reportName);
+        report.setStatus(status != null ? status : "submitted");
+        
+        // Parse dates - handle both ISO datetime and simple date formats
+        report.setSubmittedDate(parseDate(submittedDate));
+        report.setDueDate(parseDate(dueDate));
+        report.setSummary(summary);
+        
+        // Handle file upload
+        if (file != null && !file.isEmpty()) {
+            try {
+                String fileName = file.getOriginalFilename();
+                long fileSize = file.getSize();
+                
+                // TODO: Save file to storage (local disk or cloud storage)
+                // For now, just log and store metadata
+                String filePath = "/uploads/mentor-reports/" + mentor.getId() + "/" + fileName;
+                report.setFilePath(filePath);
+                report.setFileSize(formatFileSize(fileSize));
+                
+                log.info("File uploaded: {} ({})", fileName, formatFileSize(fileSize));
+            } catch (Exception e) {
+                log.error("Failed to process file upload", e);
+            }
+        }
+        
+        mentorReportRepository.save(report);
+        log.info("Mentor report saved: id={}, mentor={}, project={}", 
+                 report.getId(), mentor.getId(), projectId);
+    }
+    
+    private String formatFileSize(long bytes) {
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return String.format("%.2f KB", bytes / 1024.0);
+        return String.format("%.2f MB", bytes / (1024.0 * 1024.0));
+    }
+}

@@ -1,0 +1,6 @@
+1. API Integration: Tạo admin_service.dart và connect tất cả screens với backend
+2. Loading States: Thêm loading indicators khi call API
+3. Error Handling: Xử lý lỗi từ API responses
+4. Pagination: Thêm load more cho danh sách dài
+5. Filter/Search: Thêm tìm kiếm và lọc dữ liệu
+6. Detail Screens: Màn hình chi tiết cho từng entity
