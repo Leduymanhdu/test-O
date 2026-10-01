@@ -1,129 +1,186 @@
-# Demo Microservices (LabODC)
+# Demo Backend API (LabODC)
 
-Tài liệu này giúp demo nhanh kiến trúc microservices hiện có trong repo.
+<!-- updated: Viết lại hoàn toàn — tài liệu cũ mô tả kiến trúc microservices không tồn tại.
+     Thực tế: một Spring Boot monolith duy nhất, không có API Gateway riêng. -->
+
+Tài liệu này hướng dẫn demo nhanh backend API hiện có trong repo.
 
 ## 1) Kiến trúc hiện tại
 
-Bạn đang có các service tách riêng (mỗi service là một Spring Boot app + pom.xml + Dockerfile):
+Backend là **một ứng dụng Spring Boot monolithic** duy nhất (`labodc-backend/`), kết nối trực tiếp với PostgreSQL.
 
-- `api-gateway` (Spring Cloud Gateway)
-- `auth-service`
-- `user-service`
-- `project-service`
-- PostgreSQL dùng chung (chạy bằng Docker)
-
-Luồng request:
-
-- Client -> API Gateway -> service tương ứng
-- Auth dùng JWT (login trả token), Gateway + các service validate JWT
-
-## 2) Cách chạy (Docker Compose - microservices)
-
-Tại thư mục `LabODC_UTH/labodc`:
-
-```bash
-docker compose up -d --build
+```
+Client (Web Portal React)
+       │
+       ▼
+Spring Boot App  ←→  PostgreSQL (5432)
+(port 8080)      ←→  Cloudinary (file storage)
 ```
 
-Các port quan trọng (từ file compose):
+**Các module chính (Controllers):**
 
-- PostgreSQL: `localhost:5432`
-- Gateway: `localhost:8085` (map vào port 8080 trong container)
-- Auth service: `localhost:8081`
-- User service: `localhost:8082`
-- Project service: `localhost:8083`
+| Base path | Controller | Role được phép |
+|-----------|-----------|----------------|
+| `/api/auth` | AuthController | Public |
+| `/api/user` | UserController | Tất cả (authenticated) |
+| `/api/projects` | ProjectController | Tất cả |
+| `/api/enterprise` | EnterprisePortalController | ENTERPRISE |
+| `/api/enterprises` | EnterpriseController | LAB_ADMIN, SYSTEM_ADMIN |
+| `/api/mentor` | MentorPortalController | MENTOR |
+| `/api/talent` | TalentController | TALENT |
+| `/api/dashboard` | DashboardController | LAB_ADMIN, SYSTEM_ADMIN |
+| `/api/lab-admin/fund-allocation` | FundAllocationController | LAB_ADMIN, SYSTEM_ADMIN |
+| `/api/lab-admin/enterprises` | EnterpriseAdminController | LAB_ADMIN, SYSTEM_ADMIN |
+| `/api/lab-admin/mentors` | MentorAdminController | LAB_ADMIN, SYSTEM_ADMIN |
+| `/api/lab-admin/talents` | TalentAdminController | LAB_ADMIN, SYSTEM_ADMIN |
+| `/api/lab-admin/projects` | ProjectAdminController | LAB_ADMIN, SYSTEM_ADMIN |
+| `/api/transparency-reports` | TransparencyReportController | LAB_ADMIN, SYSTEM_ADMIN |
 
-> Demo với thầy nên gọi qua Gateway để chứng minh API Gateway hoạt động.
+## 2) Cách chạy
 
-## 3) Routing qua Gateway
-
-Gateway route cấu hình theo path:
-
-- `/auth/**` -> `auth-service:8081`
-- `/users/**` -> `user-service:8082`
-- `/projects/**` -> `project-service:8083`
-
-## 4) Kịch bản demo nhanh (curl)
-
-Dùng PowerShell hoặc cmd đều được.
-
-### Bước A: Register
+### Khởi động database (Docker):
 
 ```bash
-curl -X POST http://localhost:8085/auth/register \
+cd labodc-backend
+docker compose up -d
+```
+
+Chạy PostgreSQL trên port `5432`, pgAdmin trên port `5050`.
+
+### Khởi động Spring Boot app:
+
+```bash
+cd labodc-backend
+mvn spring-boot:run
+```
+
+App chạy tại: `http://localhost:8080`
+
+## 3) Kịch bản demo nhanh (curl / PowerShell)
+
+### Bước A: Test API hoạt động
+
+```bash
+curl http://localhost:8080/api/auth/test
+```
+
+Kết quả: `{"success":true,"message":"API is working!"}`
+
+### Bước B: Đăng ký tài khoản Talent
+
+```bash
+curl -X POST http://localhost:8080/api/auth/register \
   -H "Content-Type: application/json" \
-  -d "{\"email\":\"sv1@uth.edu.vn\",\"password\":\"123456\",\"fullName\":\"Sinh Vien 1\",\"role\":\"TALENT\"}"
+  -d "{\"email\":\"sv1@uth.edu.vn\",\"password\":\"SecurePass123!\",\"role\":\"TALENT\"}"
 ```
 
-### Bước B: Login -> lấy JWT
+### Bước C: Đăng nhập → lấy JWT
 
 ```bash
-curl -X POST http://localhost:8085/auth/login \
+curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
-  -d "{\"email\":\"sv1@uth.edu.vn\",\"password\":\"123456\"}"
+  -d "{\"email\":\"sv1@uth.edu.vn\",\"password\":\"SecurePass123!\"}"
 ```
 
-Kết quả trả về sẽ có token (ví dụ field `token`). Copy token ra biến môi trường (PowerShell):
+Kết quả trả về:
+
+```json
+{
+  "success": true,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refreshToken": "...",
+    "tokenType": "Bearer",
+    "userId": 1,
+    "email": "sv1@uth.edu.vn",
+    "role": "TALENT",
+    "status": "PENDING",
+    "emailVerified": false
+  }
+}
+```
+
+Copy token vào biến môi trường (PowerShell):
 
 ```powershell
 $TOKEN = "<PASTE_JWT_HERE>"
 ```
 
-### Bước C: Gọi service Users (đi qua gateway)
+### Bước D: Xem profile người dùng
 
 ```powershell
-curl http://localhost:8085/users/me -H "Authorization: Bearer $TOKEN"
+curl http://localhost:8080/api/user/profile -H "Authorization: Bearer $TOKEN"
 ```
 
-Update profile:
+### Bước E: Xem danh sách dự án (Talent)
 
 ```powershell
-curl -X PUT http://localhost:8085/users/me \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d "{\"fullName\":\"Sinh Vien 1 (updated)\",\"skills\":\"Java,Spring\",\"portfolioUrl\":\"https://example.com\"}"
+curl "http://localhost:8080/api/talent/projects/available" -H "Authorization: Bearer $TOKEN"
 ```
 
-### Bước D: Tạo project (Projects service qua gateway)
+### Bước F: Tham gia dự án
 
 ```powershell
-curl -X POST http://localhost:8085/projects \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d "{\"title\":\"Demo Microservices\",\"description\":\"Tao project qua gateway\"}"
+curl -X POST http://localhost:8080/api/talent/projects/1/join `
+  -H "Content-Type: application/json" `
+  -H "Authorization: Bearer $TOKEN" `
+  -d "{\"motivationLetter\":\"Tôi muốn tham gia dự án này\"}"
 ```
 
-Xem project của tôi:
+### Bước G: Xem nhiệm vụ được giao
 
 ```powershell
-curl http://localhost:8085/projects/my -H "Authorization: Bearer $TOKEN"
+curl http://localhost:8080/api/talent/tasks -H "Authorization: Bearer $TOKEN"
 ```
 
-Join project (thay `<ID>` theo kết quả):
+## 4) Demo với Lab Admin
+
+### Đăng nhập admin:
 
 ```powershell
-curl -X POST http://localhost:8085/projects/<ID>/join -H "Authorization: Bearer $TOKEN"
+$ADMIN_TOKEN = "<ADMIN_JWT>"
+```
+
+### Xem dashboard stats:
+
+```powershell
+curl http://localhost:8080/api/dashboard/stats -H "Authorization: Bearer $ADMIN_TOKEN"
+```
+
+### Xem danh sách doanh nghiệp chờ xác thực:
+
+```powershell
+curl "http://localhost:8080/api/enterprises/management?status=PENDING" -H "Authorization: Bearer $ADMIN_TOKEN"
+```
+
+### Xác thực doanh nghiệp:
+
+```powershell
+curl -X PUT http://localhost:8080/api/enterprises/1/verify -H "Authorization: Bearer $ADMIN_TOKEN"
+```
+
+### Xem Fund Allocation:
+
+```powershell
+curl http://localhost:8080/api/lab-admin/fund-allocation/stats -H "Authorization: Bearer $ADMIN_TOKEN"
 ```
 
 ## 5) Mẹo demo thuyết phục
 
-- Mở 2 cửa sổ terminal:
-  - `docker compose logs -f api-gateway`
-  - `docker compose logs -f auth-service` (hoặc user/project)
-- Khi bạn gọi `curl` qua `localhost:8085/...`, thầy sẽ thấy log ở gateway và log ở service đích.
-- Có thể thử gọi thiếu token để chứng minh gateway chặn `401`.
+- Gọi thiếu token → nhận `403 Forbidden` (chứng minh authentication hoạt động)
+- Dùng role TALENT gọi `/api/dashboard/stats` → nhận `403 Forbidden` (chứng minh RBAC)
+- Xem log Spring Boot khi gọi API để thấy request được xử lý
 
-## 6) Những điểm “microservices mức cơ bản” (để giải thích nếu thầy hỏi)
+## 6) Trạng thái hiện tại của hệ thống
 
-Hiện tại repo thể hiện microservices theo kiểu:
-
-- Deploy độc lập theo service + API Gateway
-- Routing tách biệt theo path
-- Auth dùng JWT, gateway validate sớm
-
-Nhưng chưa có (nếu thầy kỳ vọng "chuẩn" hơn):
-
-- Service Discovery (Eureka/Consul) -> hiện gateway đang route tĩnh theo host/container name
-- Config Server -> config đang nằm trong từng service
-- Database-per-service (mỗi service một DB/schema riêng) -> hiện đang dùng chung một Postgres
-- Distributed tracing/metrics (Zipkin/Jaeger/OpenTelemetry)
+| Thành phần | Trạng thái | Ghi chú |
+|-----------|-----------|---------|
+| Spring Boot Backend | ✅ Hoàn thành | Monolith, port 8080 |
+| PostgreSQL | ✅ Hoàn thành | Docker Compose |
+| JWT Authentication | ✅ Hoàn thành | JJWT 0.12.3 |
+| Cloudinary (file storage) | ✅ Tích hợp | Avatar, CV, báo cáo |
+| Web Portal (React + TS) | ✅ Có code | `labodc-web-portal/` |
+| Redis (cache/session) | ⏳ Chưa tích hợp | Trong pom.xml chưa có |
+| Elasticsearch (search) | ⏳ Chưa tích hợp | Trong pom.xml chưa có |
+| PayOS (thanh toán) | ⏳ Chưa tích hợp | Model có, API chưa tích hợp |
+| AWS Deployment | ⏳ Chưa deploy | Docker có sẵn |

@@ -81,12 +81,14 @@ Note: Task breakdown and tracking are performed using standardized Excel/Docs te
 ○ Source Code Documentation
 ○ Deployment Package Documentation
 3.6.2. Technical Stack
-● Backend: Spring Boot
-● Database: PostgreSQL, Redis, Elasticsearch
-● Mobile App (Frontend): Flutter
-● Web (Frontend): ReactJs with Typescript
-● Third-party Services: PayOS, Cloudinary.
-● Deployment: Docker, AWS.
+● Backend: Spring Boot ✅ (implemented — Spring Boot 3.2.1, Java 17)
+● Database: PostgreSQL ✅ | Redis ⏳ (planned) | Elasticsearch ⏳ (planned)
+● Web (Frontend): ReactJs with Typescript ✅ (implemented — labodc-web-portal/)
+● Third-party Services: Cloudinary ✅ | PayOS ⏳ (planned, not yet integrated)
+● Deployment: Docker ✅ (docker-compose available) | AWS ⏳ (planned)
+
+[Implementation Status Note — Oct 2026: Above marks reflect actual code state.
+ See docs/DEMO_MICROSERVICES.md for current API endpoints and running instructions.]
 3.6.3. System Components
 ● Applications:
 ○ LabOdc Portal: For candidates and enterprises (web-based).
@@ -96,5 +98,5 @@ Note: Task breakdown and tracking are performed using standardized Excel/Docs te
 ○ PostgreSQL: To store user data, job/project information, transactions (payments/rewards), and training modules.
 ○ Cloudinary: To store user avatars, training documents, and portfolio images.
 ● Architecture:
-○ RESTful API: For communication between the mobile app, dashboard, and backend.
+○ RESTful API: For communication between the web portal, dashboard, and backend.
 ○ Authentication: JWT (JSON Web Tokens) for secure user sessions.

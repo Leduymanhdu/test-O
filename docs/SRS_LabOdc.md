@@ -68,12 +68,6 @@ SRS này mô tả yêu cầu cho:
 - State management
 - API integration
 
-**Mobile Application:**
-- Native mobile UI
-- Offline capabilities
-- Push notifications
-- Mobile-specific features
-
 ### 1.3 Định nghĩa, Từ viết tắt
 
 Tham khảo phần Glossary trong URD document.
@@ -108,13 +102,13 @@ LabOdc là một hệ thống độc lập được phát triển đặc biệt 
 ┌─────────────────────────────────────────────────────┐
 │                  LabOdc System                      │
 │                                                     │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────┐ │
-│  │  Web Portal  │  │  Mobile App  │  │  Admin   │ │
-│  │   (React)    │  │  (Flutter)   │  │Dashboard │ │
-│  └───────┬──────┘  └───────┬──────┘  └────┬─────┘ │
-│          │                 │                │       │
-│          └─────────────────┼────────────────┘       │
-│                            ▼                        │
+│       ┌──────────────────┐  ┌──────────────────┐   │
+│       │    Web Portal    │  │  Admin Dashboard  │   │
+│       │     (React)      │  │     (React)       │   │
+│       └────────┬─────────┘  └────────┬──────────┘   │
+│                │                     │               │
+│                └──────────┬──────────┘               │
+│                           ▼                         │
 │              ┌──────────────────────────┐           │
 │              │     API Gateway          │           │
 │              │   (Authentication)       │           │
@@ -190,10 +184,12 @@ LabOdc là một hệ thống độc lập được phát triển đặc biệt 
 
 **Ràng buộc Công nghệ:**
 - PHẢI sử dụng Spring Boot cho backend
-- PHẢI sử dụng ReactJS + TypeScript cho web
-- PHẢI sử dụng Flutter cho mobile
-- PHẢI sử dụng PostgreSQL, Redis, Elasticsearch
-- PHẢI deploy lên AWS với Docker
+- PHẢI sử dụng ReactJS + TypeScript cho web ✅ (đã có `labodc-web-portal/`)
+- PHẢI sử dụng PostgreSQL ✅ | Redis ⏳ (chưa tích hợp) | Elasticsearch ⏳ (chưa tích hợp)
+- PHẢI deploy lên AWS với Docker ⏳ (Docker có sẵn, AWS chưa deploy)
+
+<!-- updated: Thêm trạng thái triển khai thực tế. -->
+
 
 **Ràng buộc Nghiệp vụ:**
 - CHỈ sinh viên UTH (@uth.edu.vn) mới được đăng ký Talent
@@ -240,32 +236,36 @@ LabOdc là một hệ thống độc lập được phát triển đặc biệt 
 3. So sánh hashed password
 4. Kiểm tra account status (active/inactive/locked)
 5. Tạo JWT token với payload: user_id, role, email
-6. Lưu session vào Redis (TTL: 24h)
-7. Return token và user info
+6. Return token và user info
 
-**Output:**
+<!-- updated: Bước "Lưu session vào Redis" chưa implement (Redis chưa có trong pom.xml).
+     AuthResponse thực tế (AuthResponse.java) không có field `name` và `avatar`. -->
+
+**Output (thực tế — `AuthResponse.java`):**
 ```json
 {
   "success": true,
+  "message": "Login successful",
   "data": {
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "refreshToken": "refresh_token_here",
-    "user": {
-      "id": 123,
-      "email": "user@uth.edu.vn",
-      "name": "Nguyen Van A",
-      "role": "TALENT",
-      "avatar": "https://cloudinary.com/avatar.jpg"
-    }
+    "refreshToken": "...",
+    "tokenType": "Bearer",
+    "userId": 123,
+    "email": "user@uth.edu.vn",
+    "role": "TALENT",
+    "status": "ACTIVE",
+    "emailVerified": true
   }
 }
 ```
+
+> **Lưu ý**: `name` và `avatar` chưa có trong AuthResponse hiện tại. Cần gọi thêm `GET /api/user/profile` để lấy thông tin chi tiết sau khi login.
 
 **Error Handling:**
 - `400 Bad Request`: Invalid email format
 - `401 Unauthorized`: Wrong email or password
 - `403 Forbidden`: Account locked or inactive
-- `500 Internal Server Error`: Database/Redis error
+- `500 Internal Server Error`: Database error
 
 **Business Rules:**
 - Lock account sau 5 lần sai (reset sau 30 phút)
@@ -2476,7 +2476,7 @@ Response:
     "delayedPayments": [
       {
         "projectId": 790,
-        "projectTitle": "Mobile App E-commerce",
+        "projectTitle": "E-commerce Platform",
         "enterprise": {
           "id": 124,
           "name": "XYZ Corporation",
@@ -2826,7 +2826,7 @@ Response:
     },
     "notification": {
       "emailEnabled": true,
-      "pushEnabled": true,
+      "pushEnabled": false,
       "smsEnabled": false,
       "reportDeadlineReminderDays": 3
     },
@@ -3013,6 +3013,11 @@ Response:
           "report.submit_team"
         ]
       },
+      /* LƯU Ý TRIỂN KHAI: TALENT_LEADER không phải UserRole trong hệ thống.
+         Code thực tế (UserRole.java) chỉ có 5 roles: SYSTEM_ADMIN, LAB_ADMIN,
+         ENTERPRISE, TALENT, MENTOR. Trưởng nhóm được xác định bằng
+         project_member_role_enum (LEADER/MEMBER) trong bảng project_members DB,
+         không phải role hệ thống. Phần này mô tả cấu trúc RBAC kế hoạch. */
       {
         "id": 6,
         "name": "MENTOR",
@@ -3295,11 +3300,15 @@ Response:
 
 **POST /api/system-admin/users/{id}/change-role**
 
+<!-- updated: TALENT_LEADER không phải UserRole trong code thực tế (UserRole.java).
+     Trưởng nhóm (Leader) được xác định qua project_member_role, không thay đổi system role.
+     Ví dụ change-role thực tế chỉ áp dụng cho các role: SYSTEM_ADMIN, LAB_ADMIN, ENTERPRISE, TALENT, MENTOR. -->
+
 Request:
 ```json
 {
-  "newRole": "TALENT_LEADER",
-  "reason": "User được Mentor chỉ định làm Trưởng nhóm"
+  "newRole": "TALENT",
+  "reason": "Thay đổi vai trò người dùng"
 }
 ```
 
@@ -3321,7 +3330,7 @@ Response:
   "data": {
     "userId": 456,
     "previousRole": "TALENT",
-    "newRole": "TALENT_LEADER",
+    "newRole": "TALENT",
     "changedBy": "System Admin",
     "changedAt": "2026-01-17T13:00:00Z"
   }
@@ -3600,7 +3609,7 @@ CREATE TABLE template_downloads (
 ├─────────────────────────────────────────────┤
 │ My Projects (3)          Available (47)      │
 │ ┌────────────────┐      ┌────────────────┐ │
-│ │ E-commerce     │      │ Mobile App      │ │
+│ │ E-commerce     │      │ Web Dashboard   │ │
 │ │ 18/20 tasks    │      │ ABC Tech        │ │
 │ │ Due: 5 days    │      │ [Join Project] │ │
 │ └────────────────┘      └────────────────┘ │
@@ -3631,8 +3640,6 @@ CREATE TABLE template_downloads (
 
 **Client Requirements:**
 - Web: Modern browser with JavaScript enabled
-- Mobile: iOS 12+ / Android 6.0+
-- Screen: 5" minimum for mobile
 
 ---
 
@@ -4272,7 +4279,7 @@ Tài liệu SRS này cung cấp đặc tả kỹ thuật đầy đủ cho hệ t
 ✅ **7 Modules chính** với 23 Functional Requirements chi tiết  
 ✅ **80+ API Endpoints** với request/response formats đầy đủ  
 ✅ **30+ Database Tables** với schemas và indexes  
-✅ **Interface Requirements** cho Web, Mobile, và Third-party  
+✅ **Interface Requirements** cho Web và Third-party  
 ✅ **Data Requirements** với retention policy và backup strategy  
 ✅ **Non-functional Requirements** chi tiết (Performance, Security, Scalability)  
 ✅ **Security Requirements** toàn diện  

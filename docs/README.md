@@ -2,6 +2,24 @@
 
 Thư mục này chứa tất cả tài liệu của dự án LabOdc theo chuẩn UML 2.0 và quy trình phát triển phần mềm.
 
+## 📋 Trạng thái tài liệu hiện có
+
+<!-- updated: Thêm bảng trạng thái để phân biệt tài liệu đã có và chưa có. -->
+
+| File | Loại | Trạng thái |
+|------|------|-----------|
+| `URD_LabOdc.md` | Yêu cầu người dùng (URD) | ✅ Có |
+| `SRS_LabOdc.md` | Đặc tả yêu cầu phần mềm (SRS) | ✅ Có |
+| `DEMO_MICROSERVICES.md` | Hướng dẫn demo API backend | ✅ Có |
+| `Problem.txt` | Context & Problem Statement | ✅ Có |
+| `SAD_LabOdc.md` | Kiến trúc phần mềm (SAD) | ⏳ Chưa tạo |
+| `DDD_LabOdc.md` | Thiết kế chi tiết (DDD) | ⏳ Chưa tạo |
+| `TestDoc_LabOdc.md` | Tài liệu kiểm thử | ⏳ Chưa tạo |
+| `InstallGuide_LabOdc.md` | Hướng dẫn cài đặt | ⏳ Chưa tạo |
+| `DeploymentDoc_LabOdc.md` | Tài liệu triển khai | ⏳ Chưa tạo |
+
+---
+
 ## 📁 Cấu trúc tài liệu
 
 ### 1. URD (User Requirements Document)

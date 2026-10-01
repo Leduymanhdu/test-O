@@ -206,6 +206,11 @@ LabOdc là hệ thống Lab-based ODC phi lợi nhuận, cung cấp:
 
 ### 3.5 Talent Leader (Trưởng nhóm)
 
+> **Ghi chú triển khai**: Talent Leader **không phải** một role hệ thống riêng.
+> Trong code, `UserRole.java` chỉ có `TALENT`. Trưởng nhóm được xác định bằng
+> `project_member_role_enum = LEADER` trong bảng `project_members` của DB.
+> Một Talent có thể là LEADER trong dự án này nhưng MEMBER trong dự án khác.
+
 **Kế thừa:** Tất cả quyền của Talent
 
 **Trách nhiệm thêm:**
@@ -767,7 +772,7 @@ Lab Admin
 **Mô tả:** Hệ thống PHẢI gửi thông báo đa kênh.
 
 **Chi tiết:**
-- Kênh: In-app, Email, Push (mobile)
+- Kênh: In-app, Email
 - Loại: Dự án phê duyệt, Thanh toán, Task mới, Đánh giá, Deadline
 - User có thể bật/tắt từng loại
 - Lịch sử thông báo
@@ -936,10 +941,6 @@ Lab Admin
 - Safari (latest 2 versions)
 - Edge (latest 2 versions)
 
-**NFR-COMP-002: Mobile Support**
-- iOS 12.0+
-- Android 6.0+ (API 23+)
-
 ---
 
 ## 6. RÀNG BUỘC VÀ GIẢ ĐỊNH
@@ -949,7 +950,6 @@ Lab Admin
 - Backend: PHẢI dùng Spring Boot
 - Database: PHẢI dùng PostgreSQL, Redis, Elasticsearch
 - Frontend Web: PHẢI dùng ReactJS + TypeScript
-- Mobile: PHẢI dùng Flutter
 - Payment: PHẢI dùng PayOS
 - Storage: PHẢI dùng Cloudinary
 - Deployment: PHẢI dùng Docker, AWS
