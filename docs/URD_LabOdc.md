@@ -21,6 +21,7 @@
 | Phiên bản | Ngày | Người thực hiện | Nội dung thay đổi |
 |-----------|------|----------------|-------------------|
 | 1.0 | 17/01/2026 | Nhóm 6 | Tạo tài liệu URD ban đầu |
+| 1.1 | 22/10/2026 | Nhóm 6 | Cập nhật: đánh dấu Payment, Hybrid Fund là tham khảo/tương lai; bỏ Redis/ES/2FA; điều chỉnh NFR phù hợp scope 5 tuần |
 
 ---
 
@@ -113,7 +114,7 @@ LabOdc là hệ thống Lab-based ODC phi lợi nhuận, cung cấp:
 - 10% cho Lab (vận hành)
 - Minh bạch, công khai
 
-**5. Hybrid Fund Support**
+**5. Hybrid Fund Support** *(Tính năng nâng cao - Tham khảo, không bắt buộc implement)*
 - Lab tạm ứng khi doanh nghiệp chậm thanh toán
 - Đảm bảo sinh viên/Mentor nhận tiền đúng hạn
 
@@ -187,7 +188,6 @@ LabOdc là hệ thống Lab-based ODC phi lợi nhuận, cung cấp:
 **Quyền hạn:**
 - Quản lý hồ sơ công ty
 - Đề xuất dự án mới
-- Thanh toán qua PayOS
 - Xem báo cáo tiến độ
 - Yêu cầu thay đổi/hủy dự án
 
@@ -337,7 +337,10 @@ Lab Admin
 
 ---
 
-#### FR-ENT-003: Thanh toán
+#### FR-ENT-003: Thanh toán *(Phát triển trong tương lai - Tham khảo)*
+
+> **⚠️ Ghi chú:** Tính năng thanh toán qua PayOS được lên kế hoạch phát triển trong các phase tiếp theo. Phần này chỉ mang tính tham khảo cho thiết kế tương lai.
+
 **Mô tả:** Enterprise PHẢI thanh toán qua PayOS.
 
 **Chi tiết:**
@@ -349,7 +352,7 @@ Lab Admin
 - Lịch sử giao dịch
 
 **Actor:** Enterprise  
-**Ưu tiên:** Rất cao
+**Ưu tiên:** Thấp (Phase 2)
 
 ---
 
@@ -681,7 +684,10 @@ Lab Admin
 
 ---
 
-#### FR-LAB-007: Tạm ứng Quỹ
+#### FR-LAB-007: Tạm ứng Quỹ *(Tính năng nâng cao - Tham khảo, không bắt buộc implement)*
+
+> **⚠️ Ghi chú:** Hybrid Fund Support là tính năng nâng cao, phức tạp về logic tài chính. Phần này chỉ mang tính tham khảo cho thiết kế tương lai.
+
 **Mô tả:** Lab Admin CÓ THỂ tạm ứng khi doanh nghiệp chậm thanh toán.
 
 **Chi tiết:**
@@ -693,7 +699,7 @@ Lab Admin
 - Thông báo đến doanh nghiệp
 
 **Actor:** Lab Admin  
-**Ưu tiên:** Cao
+**Ưu tiên:** Thấp (Phase 2)
 
 ---
 
@@ -786,7 +792,6 @@ Lab Admin
 **Mô tả:** Hệ thống PHẢI hỗ trợ tìm kiếm nhanh.
 
 **Chi tiết:**
-- Elasticsearch cho full-text search
 - Tìm: Dự án, Users, Báo cáo
 - Lọc đa tiêu chí
 - Autocomplete
@@ -829,6 +834,8 @@ Lab Admin
 
 ## 5. YÊU CẦU PHI CHỨC NĂNG
 
+> **Ghi chú:** Các NFR được phân loại thành **Bắt buộc** (cần test trong 5 tuần) và **Tham khảo** (phát triển trong tương lai). Hãy tập trung test các mục Bắt buộc.
+
 ### 5.1 Performance (Hiệu suất)
 
 **NFR-PERF-001: Tốc độ tải trang**
@@ -840,16 +847,15 @@ Lab Admin
 **NFR-PERF-002: API Response Time**
 - GET requests: < 200ms
 - POST/PUT requests: < 500ms
-- Search (Elasticsearch): < 1 giây
 
-**NFR-PERF-003: Thanh toán**
+**NFR-PERF-003: Thanh toán** *(Tham khảo - Phát triển trong tương lai)*
 - PayOS transaction: < 3 giây
 - Tạo hóa đơn: < 2 giây
 - Gửi email xác nhận: < 5 giây
 
 ---
 
-### 5.2 Scalability (Khả năng mở rộng)
+### 5.2 Scalability (Khả năng mở rộng) *(Tham khảo - Phát triển trong tương lai)*
 
 **NFR-SCAL-001: Concurrent Users**
 - Hỗ trợ tối thiểu: 500 concurrent users
@@ -865,7 +871,7 @@ Lab Admin
 
 ### 5.3 Reliability (Độ tin cậy)
 
-**NFR-REL-001: Uptime**
+**NFR-REL-001: Uptime** *(Tham khảo - Phát triển trong tương lai)*
 - Uptime: 99.0% (cho phép downtime 7.2 giờ/tháng)
 - Maintenance: 2-6 AM Chủ nhật
 - Zero data loss
@@ -890,13 +896,11 @@ Lab Admin
 - JWT với expiration 30 phút
 - Refresh token: 7 ngày
 - Lock account sau 5 lần sai
-- 2FA (optional) cho Admin
 - Role-based access control (RBAC)
 
 **NFR-SEC-003: Data Privacy**
-- Tuân thủ GDPR (nếu có user EU)
 - User có thể xóa dữ liệu cá nhân
-- Không share với bên thứ ba (trừ PayOS, Cloudinary)
+- Không share với bên thứ ba (trừ Cloudinary)
 - Log access to sensitive data
 
 ---
@@ -948,11 +952,10 @@ Lab Admin
 ### 6.1 Ràng buộc Công nghệ
 
 - Backend: PHẢI dùng Spring Boot
-- Database: PHẢI dùng PostgreSQL, Redis, Elasticsearch
+- Database: PHẢI dùng PostgreSQL
 - Frontend Web: PHẢI dùng ReactJS + TypeScript
-- Payment: PHẢI dùng PayOS
 - Storage: PHẢI dùng Cloudinary
-- Deployment: PHẢI dùng Docker, AWS
+- Deployment: PHẢI dùng Docker
 - KHÔNG dùng Jira/Trello (dùng Excel templates)
 
 ### 6.2 Ràng buộc Thời gian
@@ -981,8 +984,6 @@ Lab Admin
 - Hiểu tiếng Việt hoặc tiếng Anh
 
 **Về Hệ thống:**
-- AWS infrastructure luôn available
-- PayOS uptime > 99%
 - Cloudinary không bị outage
 - Email server hoạt động bình thường
 
