@@ -23,6 +23,7 @@
 | Phiên bản | Ngày | Tác giả | Mô tả thay đổi |
 |-----------|------|---------|----------------|
 | 1.0 | 17/01/2026 | Nhóm 6 | Tài liệu SRS ban đầu |
+| 1.1 | 22/10/2026 | Nhóm 6 | Cập nhật: đánh dấu PayOS, Hybrid Fund, Redis, ES, WebSocket, 2FA, GDPR là tham khảo/tương lai; điều chỉnh NFR phù hợp scope 5 tuần |
 
 ---
 
@@ -121,17 +122,17 @@ LabOdc là một hệ thống độc lập được phát triển đặc biệt 
 │                          │                          │
 │       ┌──────────────────┼──────────────────┐       │
 │       ▼                  ▼                  ▼       │
-│  ┌─────────┐      ┌──────────┐      ┌──────────┐  │
-│  │PostgreSQL│      │  Redis   │      │Elasticsearch│ │
-│  └─────────┘      └──────────┘      └──────────┘  │
+│  ┌─────────┐                                       │
+│  │PostgreSQL│                                       │
+│  └─────────┘                                       │
 │                                                     │
 └─────────────────────────────────────────────────────┘
-              │                           │
-              ▼                           ▼
-    ┌──────────────┐            ┌──────────────┐
-    │    PayOS     │            │  Cloudinary  │
-    │   Payment    │            │   Storage    │
-    └──────────────┘            └──────────────┘
+                                          │
+                                          ▼
+                                ┌──────────────┐
+                                │  Cloudinary  │
+                                │   Storage    │
+                                └──────────────┘
 ```
 
 ### 2.2 Chức năng của Sản phẩm
@@ -139,8 +140,7 @@ LabOdc là một hệ thống độc lập được phát triển đặc biệt 
 **Cho Doanh nghiệp:**
 - Đăng ký và quản lý hồ sơ công ty
 - Đề xuất dự án với thông tin đầy đủ
-- Thanh toán an toàn qua PayOS
-- Theo dõi tiến độ real-time
+- Theo dõi tiến độ
 - Xem báo cáo và đánh giá
 
 **Cho Sinh viên (Talent):**
@@ -162,7 +162,7 @@ LabOdc là một hệ thống độc lập được phát triển đặc biệt 
 - Quản lý users (Enterprise, Talent, Mentor)
 - Phân bổ quỹ (70/20/10)
 - Công bố báo cáo minh bạch
-- Tạm ứng quỹ (Hybrid Fund Support)
+- Tạm ứng quỹ (Hybrid Fund Support) *(Tham khảo)*
 
 **Cho System Administrator:**
 - Cấu hình hệ thống
@@ -185,8 +185,8 @@ LabOdc là một hệ thống độc lập được phát triển đặc biệt 
 **Ràng buộc Công nghệ:**
 - PHẢI sử dụng Spring Boot cho backend
 - PHẢI sử dụng ReactJS + TypeScript cho web ✅ (đã có `labodc-web-portal/`)
-- PHẢI sử dụng PostgreSQL ✅ | Redis ⏳ (chưa tích hợp) | Elasticsearch ⏳ (chưa tích hợp)
-- PHẢI deploy lên AWS với Docker ⏳ (Docker có sẵn, AWS chưa deploy)
+- PHẢI sử dụng PostgreSQL ✅
+- PHẢI deploy với Docker ✅
 
 <!-- updated: Thêm trạng thái triển khai thực tế. -->
 
@@ -204,14 +204,11 @@ LabOdc là một hệ thống độc lập được phát triển đặc biệt 
 
 **Giả định:**
 - Internet connection ≥ 1 Mbps
-- PayOS uptime > 99%
 - Cloudinary available
 - Email service working
 
 **Phụ thuộc:**
-- PayOS API cho payment processing
 - Cloudinary API cho file storage
-- AWS infrastructure
 - SMTP server cho email
 
 ---
@@ -238,8 +235,7 @@ LabOdc là một hệ thống độc lập được phát triển đặc biệt 
 5. Tạo JWT token với payload: user_id, role, email
 6. Return token và user info
 
-<!-- updated: Bước "Lưu session vào Redis" chưa implement (Redis chưa có trong pom.xml).
-     AuthResponse thực tế (AuthResponse.java) không có field `name` và `avatar`. -->
+<!-- updated: AuthResponse thực tế (AuthResponse.java) không có field `name` và `avatar`. -->
 
 **Output (thực tế — `AuthResponse.java`):**
 ```json
@@ -407,7 +403,7 @@ CREATE TABLE talents (
 1. Validate email format
 2. Tìm user trong database
 3. Tạo reset token (UUID, 6 digits OTP)
-4. Lưu token vào Redis (TTL: 1 hour)
+4. Lưu token vào database (TTL: 1 hour)
 5. Gửi email chứa link reset và OTP
 6. Return success message (không reveal user existence)
 
@@ -431,12 +427,12 @@ CREATE TABLE talents (
 ```
 
 **Processing:**
-1. Validate token từ Redis
+1. Validate token từ database
 2. Verify OTP
 3. Validate password strength
 4. Hash new password
 5. Update database
-6. Xóa token từ Redis
+6. Xóa token từ database
 7. Gửi email confirmation
 
 **Business Rules:**
@@ -675,7 +671,9 @@ CREATE TABLE fund_distributions (
 
 ---
 
-#### FR-ENT-003: Thanh toán Dự án
+#### FR-ENT-003: Thanh toán Dự án *(Phát triển trong tương lai — Tham khảo)*
+
+> **⚠️ Ghi chú:** Toàn bộ tính năng thanh toán qua PayOS được lên kế hoạch phát triển trong các phase tiếp theo. Phần này chỉ mang tính tham khảo cho thiết kế tương lai.
 
 **ID:** FR-ENT-003  
 **Tên:** Payment Processing  
@@ -2452,7 +2450,9 @@ CREATE INDEX idx_disbursements_status ON disbursements(status);
 
 ---
 
-#### FR-LAB-004: Hybrid Fund Support (Tạm ứng Quỹ)
+#### FR-LAB-004: Hybrid Fund Support (Tạm ứng Quỹ) *(Tính năng nâng cao — Tham khảo, không bắt buộc implement)*
+
+> **⚠️ Ghi chú:** Hybrid Fund Support là tính năng nâng cao với logic tài chính phức tạp. Phần này chỉ mang tính tham khảo cho thiết kế tương lai.
 
 **ID:** FR-LAB-004  
 **Tên:** Hybrid Fund Support  
@@ -2821,8 +2821,7 @@ Response:
       "refreshTokenExpirationDays": 7,
       "maxLoginAttempts": 5,
       "accountLockMinutes": 30,
-      "passwordMinLength": 8,
-      "require2FA": false
+      "passwordMinLength": 8
     },
     "notification": {
       "emailEnabled": true,
@@ -3645,35 +3644,7 @@ CREATE TABLE template_downloads (
 
 ### 4.3 Software Interfaces
 
-#### 4.3.1 PayOS Payment Gateway
-
-**Integration Type:** REST API  
-**Base URL:** `https://api.payos.vn`  
-**Authentication:** API Key + API Secret
-
-**Key Endpoints:**
-```
-POST /v2/payment-requests
-GET  /v2/payment-requests/{id}
-POST /v2/payment-requests/{id}/cancel
-```
-
-**Webhook:** `POST https://labodc.uth.edu.vn/api/webhooks/payos`
-
-**Sample Payment Request:**
-```json
-{
-  "orderCode": "LABODC-789-1705481234",
-  "amount": 100000000,
-  "description": "Thanh toán dự án #789",
-  "returnUrl": "https://labodc.uth.edu.vn/payments/success",
-  "cancelUrl": "https://labodc.uth.edu.vn/payments/cancel"
-}
-```
-
----
-
-#### 4.3.2 Cloudinary Media Storage
+#### 4.3.1 Cloudinary Media Storage
 
 **Integration Type:** REST API  
 **SDK:** cloudinary-java (Backend), cloudinary-react (Frontend)  
@@ -3709,34 +3680,6 @@ const result = await cloudinary.uploader.upload(file, {
 - REST architectural style
 - JSON data format
 
-#### 4.4.2 WebSocket (Optional cho Real-time)
-
-**Use Cases:**
-- Real-time notifications
-- Live task updates
-- Chat (if implemented)
-
-**Implementation:**
-```javascript
-// Client
-const ws = new WebSocket('wss://labodc.uth.edu.vn/ws');
-ws.onmessage = (event) => {
-  const notification = JSON.parse(event.data);
-  showNotification(notification);
-};
-
-// Server (Spring Boot)
-@Configuration
-@EnableWebSocket
-public class WebSocketConfig implements WebSocketConfigurer {
-    @Override
-    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(notificationHandler(), "/ws")
-                .setAllowedOrigins("*");
-    }
-}
-```
-
 ---
 
 ## 5. YÊU CẦU DỮ LIỆU
@@ -3747,8 +3690,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
 **Database:** PostgreSQL 14+  
 **Features Used:**
 - JSONB for flexible data
-- Full-text search
-- Partitioning for large tables
 - Indexes for performance
 
 **Complete ER Diagram:**
@@ -3833,8 +3774,8 @@ transparency_reports
 - Version controlled in Git
 - Backup before every change
 
-**Recovery Time Objective (RTO):** < 1 hour  
-**Recovery Point Objective (RPO):** < 15 minutes
+**Recovery Time Objective (RTO):** < 1 hour *(Tham khảo)*  
+**Recovery Point Objective (RPO):** < 15 minutes *(Tham khảo)*
 
 **Restore Procedure:**
 ```bash
@@ -3849,6 +3790,8 @@ psql -d labodc -c "SELECT COUNT(*) FROM users;"
 ---
 
 ## 6. YÊU CẦU PHI CHỨC NĂNG CHI TIẾT
+
+> **Ghi chú:** Các NFR được phân loại thành **Bắt buộc** (cần test trong 5 tuần) và **Tham khảo** (phát triển trong tương lai). Sinh viên tập trung test các mục Bắt buộc.
 
 ### 6.1 Performance Requirements
 
@@ -3875,7 +3818,7 @@ psql -d labodc -c "SELECT COUNT(*) FROM users;"
 
 ---
 
-### 6.2 Scalability Requirements
+### 6.2 Scalability Requirements *(Tham khảo — Phát triển trong tương lai)*
 
 **SC-001: Concurrent Users**
 - Normal load: 500 concurrent users
@@ -3891,11 +3834,10 @@ psql -d labodc -c "SELECT COUNT(*) FROM users;"
 **SC-003: Horizontal Scaling**
 - Backend: Stateless, can scale to N instances
 - Database: Read replicas for scaling reads
-- Cache: Redis cluster
 
 ---
 
-### 6.3 Availability & Reliability
+### 6.3 Availability & Reliability *(Tham khảo — Phát triển trong tương lai)*
 
 **AV-001: Uptime**
 - Target: 99.0% uptime
@@ -3929,13 +3871,6 @@ psql -d labodc -c "SELECT COUNT(*) FROM users;"
 - Refresh token expiration: 7 days
 - Secure cookies: HttpOnly, Secure, SameSite
 
-**AU-003: Multi-Factor Authentication (Optional)**
-- TOTP-based 2FA
-- Backup codes
-- Required for System Admin (optional for others)
-
----
-
 ### 7.2 Data Protection
 
 **DP-001: Encryption**
@@ -3946,8 +3881,7 @@ psql -d labodc -c "SELECT COUNT(*) FROM users;"
 
 **DP-002: Sensitive Data Handling**
 - Tax codes: Encrypted
-- Payment info: Never stored (use PayOS tokens)
-- Personal data: GDPR compliant
+- Personal data: Bảo vệ theo quy định
 - Audit logs: Encrypted
 
 **DP-003: Data Masking**
@@ -3979,13 +3913,7 @@ psql -d labodc -c "SELECT COUNT(*) FROM users;"
 
 ### 7.4 Compliance
 
-**CO-001: GDPR Compliance**
-- Right to access data
-- Right to delete data
-- Right to data portability
-- Privacy policy & consent
-
-**CO-002: Audit Logging**
+**CO-001: Audit Logging**
 - All admin actions logged
 - All fund transactions logged
 - All user authentication attempts logged
@@ -4007,7 +3935,7 @@ Steps:
 Expected:
   - User redirected to appropriate dashboard
   - JWT token received
-  - Session created in Redis
+  - Session created successfully
 ```
 
 **TC-AUTH-002: Invalid Password**
@@ -4073,7 +4001,9 @@ Expected:
 
 ---
 
-### 8.3 Payment Test Cases
+### 8.3 Payment Test Cases *(Tham khảo — Phát triển trong tương lai)*
+
+> **Ghi chú:** Các test case thanh toán sẽ được triển khai khi tính năng PayOS được implement.
 
 **TC-PAY-001: Successful Payment**
 ```
@@ -4120,13 +4050,12 @@ Steps:
   5. Lab Admin assigns Mentor
   6. Mentor accepts invitation
   7. Talents join project
-  8. Enterprise makes payment
-  9. Mentor uploads tasks
-  10. Talents complete tasks
-  11. Mentor submits report
-  12. Talent Leader distributes fund
-  13. Mentor approves distribution
-  14. Lab Admin disburses funds
+  8. Mentor uploads tasks
+  9. Talents complete tasks
+  10. Mentor submits report
+  11. Talent Leader distributes fund
+  12. Mentor approves distribution
+  13. Lab Admin disburses funds
 Expected:
   - All statuses updated correctly
   - All notifications sent
@@ -4136,7 +4065,7 @@ Expected:
 
 ---
 
-### 8.5 Performance Test Cases
+### 8.5 Performance Test Cases *(Tham khảo — Phát triển trong tương lai)*
 
 **TC-PERF-001: Load Testing**
 ```
@@ -4172,8 +4101,8 @@ Expected:
 | AUTH-003 | Token expired | JWT token hết hạn |
 | PROJ-001 | Project not found | Dự án không tồn tại |
 | PROJ-002 | Insufficient budget | Ngân sách < minimum |
-| PAY-001 | Payment failed | Thanh toán thất bại |
-| PAY-002 | Payment delayed | Thanh toán chậm |
+| PAY-001 | Payment failed | Thanh toán thất bại *(Tham khảo)* |
+| PAY-002 | Payment delayed | Thanh toán chậm *(Tham khảo)* |
 | FUND-001 | Invalid distribution | Phân phối không hợp lệ |
 | FUND-002 | Distribution not 100% | Tổng % != 100 |
 | PERM-001 | Access denied | Không có quyền |
@@ -4283,7 +4212,9 @@ Tài liệu SRS này cung cấp đặc tả kỹ thuật đầy đủ cho hệ t
 ✅ **Data Requirements** với retention policy và backup strategy  
 ✅ **Non-functional Requirements** chi tiết (Performance, Security, Scalability)  
 ✅ **Security Requirements** toàn diện  
-✅ **Test Cases** cho tất cả modules chính  
+✅ **Test Cases** cho tất cả modules chính
+
+> **Ghi chú phiên bản 1.1:** Các tính năng sau được đánh dấu **Tham khảo / Phát triển trong tương lai**: PayOS Payment, Hybrid Fund Support, Redis, Elasticsearch, WebSocket, 2FA, GDPR, Scalability/Uptime targets. Sinh viên tập trung test các chức năng đã implement trong 5 tuần.  
 
 Tài liệu này là foundation cho:
 - **SAD (Software Architecture Document)**: Thiết kế kiến trúc hệ thống
