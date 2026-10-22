@@ -3,7 +3,7 @@ name: Build and Push Docker Images
 on:
   push:
     tags:
-      - 'v*'
+      - 'week-*-v*'
 
 jobs:
   build-backend:
