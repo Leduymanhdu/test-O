@@ -1,0 +1,413 @@
+/* ===== PAGE WRAPPER - Matching HomePage Background ===== */
+.pageWrapper {
+  background: white;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.dashboardContainer {
+  max-width: 1400px;
+  margin: 0 auto;
+  animation: fadeIn 0.4s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== HEADER ===== */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.title {
+  margin: 0 !important;
+  color: #fff;
+  font-size: 28px;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.subtitle {
+  display: block;
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+}
+
+.refreshBtn {
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.divider {
+  margin: 16px 0 24px;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ===== LOADING & ERROR ===== */
+.loadingContainer,
+.errorContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: var(--background-hero);
+  padding: 24px;
+}
+
+/* ===== STATS CARDS ===== */
+.statsRow {
+  margin-bottom: 24px;
+}
+
+.statCard {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  height: 100%;
+}
+
+.statCard:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.statTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #595959;
+}
+
+.statIcon {
+  font-size: 18px;
+  color: #17a2b8;
+}
+
+.statProgress {
+  margin: 12px 0 8px;
+}
+
+.statLabel {
+  display: block;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.statDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+  font-size: 12px;
+}
+
+/* ===== METRICS ===== */
+.metricsRow {
+  margin-bottom: 24px;
+}
+
+.metricCard {
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  border: none;
+  height: 100%;
+}
+
+.metricProgress {
+  margin-top: 12px;
+}
+
+/* ===== CHARTS ===== */
+.chartsRow {
+  margin-bottom: 24px;
+}
+
+.chartCard {
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  border: none;
+  height: 100%;
+}
+
+.chartCard :global(.ant-card-head) {
+  border-bottom: 2px solid #f0f0f0;
+}
+
+/* ===== BOTTOM ROW ===== */
+.bottomRow {
+  margin-bottom: 24px;
+}
+
+.activityCard,
+.approvalCard {
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  border: none;
+  height: 100%;
+}
+
+.timeline {
+  max-height: 450px;
+  overflow-y: auto;
+  padding-right: 12px;
+  padding-left: 12px;
+  padding-top: 5px;
+}
+
+.timeline::-webkit-scrollbar {
+  width: 6px;
+}
+
+.timeline::-webkit-scrollbar-track {
+  background: #f5f5f5;
+  border-radius: 3px;
+}
+
+.timeline::-webkit-scrollbar-thumb {
+  background: #bfbfbf;
+  border-radius: 3px;
+}
+
+.timeline::-webkit-scrollbar-thumb:hover {
+  background: #8c8c8c;
+}
+
+.activityItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.activityTitle {
+  font-size: 14px;
+  color: #262626;
+}
+
+.activityDesc {
+  font-size: 13px;
+  color: #8c8c8c;
+  line-height: 1.4;
+}
+
+.activityTime {
+  font-size: 12px;
+  color: #bfbfbf;
+  margin-top: 2px;
+}
+
+.approvalTable {
+  font-size: 13px;
+}
+
+.approvalTable :global(.ant-table-cell) {
+  padding: 10px 12px !important;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+
+/* Tablet: 768px - 1023px */
+@media (max-width: 1023px) {
+  .pageWrapper {
+    padding: 20px 16px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+  }
+
+  .statsRow,
+  .metricsRow,
+  .chartsRow,
+  .bottomRow {
+    margin-bottom: 20px;
+  }
+
+  .statCard,
+  .metricCard,
+  .chartCard,
+  .activityCard,
+  .approvalCard {
+    margin-bottom: 16px;
+  }
+
+  .timeline {
+    max-height: 350px;
+  }
+}
+
+/* Mobile: < 768px */
+@media (max-width: 767px) {
+  .pageWrapper {
+    padding: 16px 12px;
+  }
+
+  .dashboardContainer {
+    width: 100%;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+
+  .subtitle {
+    font-size: 12px;
+  }
+
+  .refreshBtn {
+    width: 100%;
+  }
+
+  .divider {
+    margin: 12px 0 16px;
+  }
+
+  .statCard {
+    margin-bottom: 12px;
+  }
+
+  .statTitle {
+    font-size: 13px;
+  }
+
+  .statIcon {
+    font-size: 16px;
+  }
+
+  .statDetails {
+    font-size: 11px;
+  }
+
+  .metricCard,
+  .chartCard {
+    margin-bottom: 12px;
+  }
+
+  .chartCard :global(.recharts-wrapper) {
+    font-size: 11px;
+  }
+
+  .timeline {
+    max-height: 300px;
+    padding-right: 8px;
+  }
+
+  .activityTitle {
+    font-size: 13px;
+  }
+
+  .activityDesc {
+    font-size: 12px;
+  }
+
+  .activityTime {
+    font-size: 11px;
+  }
+
+  .approvalTable {
+    font-size: 12px;
+  }
+
+  .approvalTable :global(.ant-table-cell) {
+    padding: 8px 6px !important;
+  }
+
+  .statsRow,
+  .metricsRow,
+  .chartsRow,
+  .bottomRow {
+    margin-bottom: 16px;
+  }
+}
+
+/* Extra Small Mobile: < 480px */
+@media (max-width: 479px) {
+  .pageWrapper {
+    padding: 12px 8px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+
+  .subtitle {
+    font-size: 11px;
+  }
+
+  .statCard :global(.ant-statistic-content) {
+    font-size: 20px;
+  }
+
+  .chartCard {
+    padding: 12px;
+  }
+
+  .timeline {
+    max-height: 250px;
+  }
+}
+
+/* High Performance Optimizations */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .pageWrapper {
+    background: white;
+    padding: 0;
+  }
+
+  .refreshBtn {
+    display: none;
+  }
+
+  .statCard,
+  .metricCard,
+  .chartCard,
+  .activityCard,
+  .approvalCard {
+    box-shadow: none;
+    border: 1px solid #d9d9d9;
+    page-break-inside: avoid;
+  }
+}
+
+/* Dark Mode Support (if needed) */
+@media (prefers-color-scheme: dark) {
+  /* Add dark mode styles here if required */
+}

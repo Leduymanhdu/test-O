@@ -1,0 +1,92 @@
+/* ===== PAGE WRAPPER ===== */
+.pageWrapper {
+  background: white;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.dashboardContainer {
+  max-width: 1000px;
+  margin: 0 auto;
+  animation: fadeIn 0.4s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== HEADER ===== */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.title {
+  margin: 0 !important;
+  color: #262626;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.subtitle {
+  display: block;
+  margin-top: 4px;
+  color: #8c8c8c;
+  font-size: 14px;
+}
+
+.divider {
+  margin: 16px 0 24px;
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+/* ===== SECTION CARDS ===== */
+.sectionCard {
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  border: none;
+  margin-bottom: 24px;
+}
+
+/* ===== SUBMIT ===== */
+.submitRow {
+  display: flex;
+  justify-content: center;
+  padding-top: 24px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1023px) {
+  .pageWrapper {
+    padding: 20px 16px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 767px) {
+  .pageWrapper {
+    padding: 16px 12px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+
+  .header {
+    flex-direction: column;
+  }
+}

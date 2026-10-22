@@ -1,0 +1,141 @@
+/* Responsive Breakpoints */
+
+/* ===== ANT DESIGN GLOBAL RESPONSIVE FIXES ===== */
+
+/* Tables scroll horizontally on small screens */
+.ant-table-wrapper {
+  overflow-x: auto;
+}
+
+/* Cards inside Ant Design Row/Col wrap properly */
+.ant-card {
+  min-width: 0;
+}
+
+/* Forms full width on mobile */
+@media (max-width: 768px) {
+  .ant-form-item {
+    margin-bottom: 12px;
+  }
+
+  .ant-space-wrap {
+    gap: 8px !important;
+  }
+
+  /* Stack flex rows on mobile */
+  .ant-row {
+    flex-wrap: wrap;
+  }
+}
+
+/* ===== BREAKPOINTS ===== */
+
+/* Mobile (max-width: 768px) */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 var(--spacing-md);
+  }
+
+  .page-title {
+    font-size: var(--font-xl);
+  }
+
+  .section-title {
+    font-size: var(--font-lg);
+  }
+
+  /* Adjust header for mobile */
+  .header {
+    padding: 0 var(--spacing-md);
+  }
+
+  /* Stack cards vertically */
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Full width forms */
+  .form-container {
+    padding: var(--spacing-md);
+  }
+
+  /* Page wrappers with inline padding */
+  div[style*="padding: 24px"],
+  div[style*="padding:24px"] {
+    padding: 12px !important;
+  }
+
+  /* page-wrapper class used in enterprise pages */
+  .page-wrapper {
+    padding: 12px !important;
+  }
+
+  /* Page header flex stack */
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 8px;
+  }
+}
+
+/* Tablet (768px - 1366px) */
+@media (min-width: 768px) and (max-width: 1366px) {
+  .container {
+    max-width: 960px;
+  }
+
+  .cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Laptop (1366px - 1920px) */
+@media (min-width: 1366px) and (max-width: 1920px) {
+  .container {
+    max-width: 1200px;
+  }
+
+  .cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Desktop (min-width: 1920px) */
+@media (min-width: 1920px) {
+  .container {
+    max-width: 1600px;
+  }
+
+  .cards-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Utility classes for responsive design */
+.mobile-only {
+  display: block;
+}
+
+.tablet-up {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .mobile-only {
+    display: none;
+  }
+
+  .tablet-up {
+    display: block;
+  }
+}
+
+.desktop-only {
+  display: none;
+}
+
+@media (min-width: 1366px) {
+  .desktop-only {
+    display: block;
+  }
+}

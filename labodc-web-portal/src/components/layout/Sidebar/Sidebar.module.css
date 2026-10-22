@@ -1,0 +1,37 @@
+.sider {
+  background: var(--background-secondary) !important;
+  box-shadow: var(--shadow-md);
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex-shrink: 0;
+  /* Ant Design Sider already transitions width internally.
+     We reinforce it here so the flex sibling animates smoothly too. */
+}
+
+/* Mobile: detach from flex flow, slide in as overlay */
+.mobile {
+  position: fixed !important;
+  left: 0;
+  top: 64px;
+  height: calc(100vh - 64px) !important;
+  z-index: 1030;
+  /* Slide in/out on open/close */
+  transition: width 0.3s cubic-bezier(0.2, 0, 0, 1) !important;
+}
+
+.menu {
+  border-right: none !important;
+  padding: var(--spacing-md) 0;
+}
+
+.menu :global(.ant-menu-item),
+.menu :global(.ant-menu-submenu-title) {
+  margin: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-md);
+}
+
+.menu :global(.ant-menu-item-selected) {
+  background-color: var(--secondary-color);
+  color: var(--primary-color);
+  font-weight: var(--font-weight-medium);
+}

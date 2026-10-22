@@ -1,0 +1,120 @@
+.header {
+  background: var(--background-hero);
+  height: 64px;
+  padding: 0 var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow-md);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.toggleButton {
+  color: var(--text-white);
+  font-size: 20px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggleButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+}
+
+.logoImg {
+  height: 30px;
+  transition: transform var(--transition-normal);
+  background-color: white;
+}
+
+
+
+.logoText {
+  color: var(--text-white);
+  font-size: var(--font-xl);
+  font-weight: var(--font-weight-bold);
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .logoText {
+    display: block;
+  }
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.notificationBadge {
+  cursor: pointer;
+}
+
+.notificationIcon {
+  color: var(--text-white);
+  font-size: 20px;
+  transition: transform var(--transition-fast);
+}
+
+.userMenu {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-md);
+  transition-background: var(--transition-fast);
+}
+
+.userMenu:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.avatar {
+  border: 2px solid var(--text-white);
+  transition: transform var(--transition-fast);
+}
+
+.avatar:hover {
+  transform: scale(1.1);
+}
+
+.userInfo {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .userInfo {
+    display: block;
+  }
+}
+
+.userName {
+  color: var(--text-white);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-sm);
+}
+
+.userRole {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: var(--font-xs);
+}

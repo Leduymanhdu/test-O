@@ -1,0 +1,99 @@
+:root {
+  /* Colors - UT Template Style (courses.ut.edu.vn) */
+  --primary-color: #17a2b8;        /* Main teal color - header, buttons */
+  --primary-dark: #138496;          /* Darker teal - hover states */
+  --primary-light: #5BC0DE;         /* Lighter teal - subtle backgrounds */
+  --secondary-color: #E0F7FA;       /* Light cyan background */
+  --accent-color: #00BCD4;          /* Bright cyan - accents */
+  
+  /* Status Colors */
+  --success-color: #4CAF50;         /* Green - complete, success */
+  --warning-color: #FFC107;         /* Amber - warning, in progress */
+  --error-color: #F44336;           /* Red - error, danger */
+  --info-color: #2196F3;            /* Blue - info, notifications */
+  
+  /* Background Colors */
+  --background-primary: #F5F5F5;    /* Main page background */
+  --background-secondary: #FFFFFF;  /* Card/content background */
+  --background-hero: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  --background-overlay: rgba(0, 0, 0, 0.5);
+  
+  /* Text Colors */
+  --text-primary: #333333;          /* Main text */
+  --text-secondary: #666666;        /* Secondary text */
+  --text-light: #999999;            /* Light text, labels */
+  --text-white: #FFFFFF;            /* White text */
+  --text-link: #17a2b8;             /* Links */
+  --text-link-hover: #138496;       /* Links hover */
+  
+  /* Border & Divider */
+  --border-color: #E0E0E0;
+  --divider-color: #EEEEEE;
+  
+  /* Card & Component Colors */
+  --card-background: #FFFFFF;
+  --card-hover: #FAFAFA;
+  --input-background: #FFFFFF;
+  --input-border: #D0D0D0;
+  --input-focus: #17a2b8;
+  
+  /* Progress Bar Colors */
+  --progress-low: #F44336;          /* 0-30% */
+  --progress-medium: #FFC107;       /* 31-70% */
+  --progress-high: #4CAF50;         /* 71-100% */
+  
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+  
+  /* Border Radius */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-round: 50%;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.12);
+  --shadow-xl: 0 8px 24px rgba(0,0,0,0.15);
+  
+  /* Font Sizes */
+  --font-xs: 12px;
+  --font-sm: 14px;
+  --font-md: 16px;
+  --font-lg: 18px;
+  --font-xl: 24px;
+  --font-xxl: 32px;
+  --font-xxxl: 40px;
+  
+  /* Font Weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* Line Heights */
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.8;
+  
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+  
+  /* Z-index Layers */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+}

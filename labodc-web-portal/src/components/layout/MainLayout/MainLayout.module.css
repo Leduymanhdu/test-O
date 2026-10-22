@@ -1,0 +1,51 @@
+.layout {
+  min-height: 100vh;
+}
+
+/* Flex row: sidebar + content sit side by side */
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  min-height: 0;
+  position: relative;
+}
+
+/*
+  Desktop: flex child, fills space left after sidebar.
+  Ant Design Sider animates its own width (250→80px) via built-in CSS transition.
+  This div just stretches to fill the remaining flex space — no JS margin needed.
+
+  Mobile: Sider is position:fixed (out of flex flow),
+  so this automatically becomes 100% width.
+*/
+.contentLayout {
+  flex: 1;
+  min-width: 0;       /* prevent flex overflow on narrow screens */
+  overflow: hidden;   /* contain any overflowing children */
+}
+
+.content {
+  margin: 24px;
+  padding: 24px;
+  background: #fff;
+  border-radius: 12px;
+  min-height: calc(100vh - 160px);
+  overflow-x: auto;
+}
+
+/* Dim overlay behind mobile sidebar */
+.overlay {
+  position: fixed;
+  inset: 64px 0 0 0;   /* top: 64px (below header), cover rest */
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1029;        /* between header(1020) and sidebar(1030) */
+}
+
+@media (max-width: 768px) {
+  .content {
+    margin: 12px;
+    padding: 16px;
+    border-radius: 8px;
+  }
+}

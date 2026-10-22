@@ -1,0 +1,63 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background-hero);
+  padding: var(--spacing-lg);
+}
+
+.registerBox {
+  width: 100%;
+  max-width: 500px;
+}
+
+.logoSection {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.logo {
+  height: 50px;
+  margin-bottom: var(--spacing-md);
+  background-color: white;
+  margin: 0 auto;
+}
+
+.title {
+  color: var(--text-white);
+  font-size: var(--font-xxl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-xs);
+}
+
+.card {
+  box-shadow: var(--shadow-xl);
+  border-radius: var(--radius-lg);
+}
+
+.loginLink {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  margin-top: var(--spacing-md);
+}
+
+.loginLink a {
+  color: var(--text-link);
+  font-weight: var(--font-weight-medium);
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: var(--spacing-md);
+  }
+
+  .logo {
+    height: 60px;
+  }
+
+  .title {
+    font-size: var(--font-xl);
+  }
+}

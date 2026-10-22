@@ -1,0 +1,97 @@
+/* Ant Design Custom Overrides */
+
+/* Primary color override */
+.ant-btn-primary {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.ant-btn-primary:hover {
+  background: var(--primary-dark);
+  border-color: var(--primary-dark);
+}
+
+/* Links */
+.ant-typography a,
+.ant-btn-link {
+  color: var(--text-link);
+}
+
+.ant-typography a:hover,
+.ant-btn-link:hover {
+  color: var(--text-link-hover);
+}
+
+/* Menu */
+.ant-menu-item-selected {
+  background-color: var(--secondary-color) !important;
+  color: var(--primary-color) !important;
+}
+
+/* Table */
+.ant-table-thead > tr > th {
+  background-color: var(--secondary-color);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Card */
+.ant-card {
+  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-lg);
+}
+
+.ant-card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+/* Input */
+.ant-input:focus,
+.ant-input-focused {
+  border-color: var(--input-focus);
+  box-shadow: 0 0 0 2px rgba(23, 162, 184, 0.1);
+}
+
+/* Select */
+.ant-select-focused .ant-select-selector {
+  border-color: var(--input-focus) !important;
+  box-shadow: 0 0 0 2px rgba(23, 162, 184, 0.1) !important;
+}
+
+/* Badge */
+.ant-badge-status-success {
+  background-color: var(--success-color);
+}
+
+.ant-badge-status-warning {
+  background-color: var(--warning-color);
+}
+
+.ant-badge-status-error {
+  background-color: var(--error-color);
+}
+
+.ant-badge-status-processing {
+  background-color: var(--info-color);
+}
+
+/* Progress */
+.ant-progress-success-bg,
+.ant-progress-bg {
+  background-color: var(--primary-color);
+}
+
+/* Notification */
+.ant-notification-notice {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Modal */
+.ant-modal-content {
+  border-radius: var(--radius-lg);
+}
+
+.ant-modal-header {
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}

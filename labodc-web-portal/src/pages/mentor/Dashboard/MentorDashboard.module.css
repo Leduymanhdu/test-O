@@ -1,0 +1,264 @@
+/* ===== PAGE WRAPPER - Matching AdminDashboard Style ===== */
+.pageWrapper {
+  background: white;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.dashboardContainer {
+  max-width: 1400px;
+  margin: 0 auto;
+  animation: fadeIn 0.4s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== HEADER ===== */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.title {
+  margin: 0 !important;
+  color: #262626;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.subtitle {
+  display: block;
+  margin-top: 4px;
+  color: #8c8c8c;
+  font-size: 14px;
+}
+
+.refreshBtn {
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.divider {
+  margin: 16px 0 24px;
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+/* ===== LOADING & ERROR ===== */
+.loadingContainer,
+.errorContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: white;
+  padding: 24px;
+}
+
+/* ===== STATS CARDS ===== */
+.statsRow {
+  margin-bottom: 24px;
+}
+
+.statCard {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  height: 100%;
+}
+
+.statCard:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.statTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #595959;
+}
+
+.statIcon {
+  font-size: 18px;
+  color: #17a2b8;
+}
+
+.statProgress {
+  margin: 12px 0 8px;
+}
+
+.statLabel {
+  display: block;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.statDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+  font-size: 12px;
+}
+
+/* ===== QUICK ACTIONS ===== */
+.quickActions {
+  margin-bottom: 24px;
+}
+
+.actionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.actionCard {
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  border: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  height: 100%;
+}
+
+.actionCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.actionButton {
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* ===== RECENT ACTIVITY ===== */
+.recentActivity {
+  margin-bottom: 24px;
+}
+
+.activityCard {
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  border: none;
+  height: 100%;
+}
+
+.activityList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.activityItem {
+  padding: 16px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.02);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 4px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.activityItem:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.activityText {
+  font-weight: 500;
+  color: #262626;
+  font-size: 14px;
+}
+
+.activityMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.activityBadge {
+  border: 1px solid;
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.activityTime {
+  font-size: 13px;
+  color: #8c8c8c;
+}
+
+.trend {
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+.loader {
+  min-height: 60vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1023px) {
+  .pageWrapper {
+    padding: 20px 16px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+  }
+
+  .statsRow,
+  .quickActions,
+  .recentActivity {
+    margin-bottom: 20px;
+  }
+}
+
+@media (max-width: 767px) {
+  .pageWrapper {
+    padding: 16px 12px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .actionGrid {
+    grid-template-columns: 1fr;
+  }
+}
